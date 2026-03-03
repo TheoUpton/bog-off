@@ -7,5 +7,13 @@
 </head>
 <body>
     <h1>Bog Off</h1>
+    <script>
+        const socket = new WebSocket('ws://leonardo:3000')
+
+        socket.addEventListener('open', () => {
+            console.log('connected to server')
+            socket.send(JSON.stringify({ type: 'join', name: 'Alice' }))
+        })
+    </script>
 </body>
 </html>
