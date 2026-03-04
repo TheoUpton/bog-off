@@ -26,6 +26,8 @@ function joinLobby(player, lobbyId){
     player.socket.send(JSON.stringify({type: 'joined', lobby: lobby }))
 }
 
+const selectGame = require("./games/gameRegistry.js");
+
 function startGame(){}
 
 wss.on('connection', (socket, request) => {
