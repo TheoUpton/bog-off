@@ -37,8 +37,9 @@ class Lobby {
 
     isEmpty(){return this.#players.size == this.#dcCount;}
 
-    broadcast(message){
+    broadcast(message, ignorePlayer = null){
         this.#players.forEach(player => {
+            if(player === ignorePlayer) return;
             if(player.isConnected) player.socket.send(JSON.stringify(message));
         });
     }
