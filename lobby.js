@@ -7,17 +7,17 @@ class Lobby {
     get id(){return this.#id;}
 
     addPlayer(player){
-        const existing = this.#players.get(player.id);
+        const existing = this.#players.get(player._privateId);
         if(existing === player) return;
         if(existing && !existing.isConnected) this.#dcCount--;
-        this.#players.set(player.id, player);
+        this.#players.set(player._privateId, player);
         player._currentLobby = this;
     }
     removePlayer(player){
         this.readyPlayer(player, false);
         if(!player.isConnected) this.#dcCount--;
         player._currentLobby = null;
-        this.#players.delete(player.id);
+        this.#players.delete(player._privateId);
     }
     disconnectedPlayer(player){
         this.#dcCount++;
@@ -42,14 +42,17 @@ class Lobby {
 }
 
 class Player {
-    #socket; #currentLobby; #id;
-    constructor(socket, id, name = ""){
+    #socket; #currentLobby; #id; #privateId
+    constructor(socket, privateid, id, name = ""){
         this.#socket = socket;
+        this.#privateId = privateid;
         this.#id = id;
         this.ready = false;
         this.name = name;
     }
     get socket(){return this.#socket;}
+
+    get _privateId(){return this.#privateId;}
 
     get id(){return this.#id;}
 
