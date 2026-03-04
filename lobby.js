@@ -1,5 +1,5 @@
 class Lobby {
-    #id; #players; #dcCount = 0; #readyCount = 0;
+    #id; #players; #dcCount = 0; #readyCount = 0; #game;
     constructor(id){
         this.#id = id;
         this.#players = new Map();
@@ -29,6 +29,9 @@ class Lobby {
         if(ready) this.#readyCount++;
         else this.#readyCount--;
     }
+
+    get game(){return this.#game;}
+    setGame(game){this.#game = game;}
 
     isReady(){return this.#players.size - this.#dcCount == this.#readyCount;}
 
