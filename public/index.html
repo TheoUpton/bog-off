@@ -8,7 +8,8 @@
 <body>
     <h1>Bog Off</h1>
     <script>
-        const socket = new WebSocket('ws://leonardo:3000')
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+        const socket = new WebSocket(`${protocol}://${window.location.host}`)
 
         socket.addEventListener('open', () => {
             console.log('connected to server')
