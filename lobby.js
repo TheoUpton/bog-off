@@ -39,11 +39,18 @@ class Lobby {
             if(player.isConnected) player.socket.send(JSON.stringify(message));
         });
     }
+
+    toJSON(){
+        return {
+            id: this.id,
+            players: [...this.#players.values()]
+        };
+    }
 }
 
 class Player {
     #socket; #currentLobby; #id; #privateId
-    constructor(socket, privateid, id, name = ""){
+    constructor(socket, {privateid, id, name}){
         this.#socket = socket;
         this.#privateId = privateid;
         this.#id = id;
@@ -63,6 +70,18 @@ class Player {
     set _currentLobby(lobby){
         this.#currentLobby = lobby;
         this.ready = false;
+    }
+
+    toJSON(){
+        return {id: this.id, name: this.name, ready: this.ready};
+    }
+
+    static paramsFromURL(url){
+        return {
+            name: url.searchParams.get('name'),
+            privateId: url.searchParams.get('privateId'),
+            id: url.searchParams.get('id')
+        }
     }
 }
 
