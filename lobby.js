@@ -1,11 +1,25 @@
+/**
+ * @typedef {string} UUID
+ */
 class Lobby {
-    #id; #players; #dcCount = 0; #readyCount = 0; #game;
+    /**@type {UUID}*/
+    #id; 
+    /**@type {Map<UUID, Player>}*/
+    #players; 
+    /**@type {import('./games/game')} */
+    #game;
+    #dcCount = 0; #readyCount = 0; 
+
+    /** @param {UUID} id  */
     constructor(id){
         this.#id = id;
         this.#players = new Map();
     }
+
+    /** @returns {UUID} */
     get id(){return this.#id;}
 
+    /** @param {Player} player */
     addPlayer(player){
         const existing = this.#players.get(player._privateId);
         if(existing === player) return;
@@ -13,30 +27,47 @@ class Lobby {
         this.#players.set(player._privateId, player);
         player._currentLobby = this;
     }
+    /** @param {Player} player */
     removePlayer(player){
         this.readyPlayer(player, false);
         if(!player.isConnected) this.#dcCount--;
         player._currentLobby = null;
         this.#players.delete(player._privateId);
     }
+    /** @param {Player} player */
     disconnectedPlayer(player){
         this.#dcCount++;
         this.readyPlayer(player, false);
     }
+    /**
+     * @param {Player} player 
+     * @param {Boolean} ready 
+     */
     readyPlayer(player, ready){
         if(player.ready == ready) return;
         player.ready = ready;
         if(ready) this.#readyCount++;
         else this.#readyCount--;
     }
-
+    /** @returns {import('./games/game')} */
     get game(){return this.#game;}
+    /**@param {import('./games/game')} game */
     setGame(game){this.#game = game;}
 
+    /** returns true if all active players are set to ready
+     * @returns {boolean}
+     */
     isReady(){return this.#players.size - this.#dcCount == this.#readyCount;}
 
+    /** returns true if there no active players in the lobby
+     * @returns {boolean}
+     */
     isEmpty(){return this.#players.size == this.#dcCount;}
 
+    /** Broadcasts a message to all players* that have a connected websocket
+     * @param {String} message 
+     * @param {Player} ignorePlayer this player will not be broadcast to
+     */
     broadcast(message, ignorePlayer = null){
         this.#players.forEach(player => {
             if(player === ignorePlayer) return;
@@ -54,6 +85,11 @@ class Lobby {
 
 class Player {
     #socket; #currentLobby; #id; #privateId
+    /**
+     * 
+     * @param {import('ws')} socket 
+     * @param {{privateid: UUID, id: UUID, name: string}} param1 
+     */
     constructor(socket, {privateid, id, name}){
         this.#socket = socket;
         this.#privateId = privateid;
@@ -61,25 +97,34 @@ class Player {
         this.ready = false;
         this.name = name;
     }
+    /**@returns {import('ws')} */
     get socket(){return this.#socket;}
 
+    /**@returns {UUID} */
     get _privateId(){return this.#privateId;}
 
+    /**@returns {UUID} */
     get id(){return this.#id;}
 
+    /**@returns {Boolean} */
     get isConnected(){return this.socket && this.socket.readyState === 1;}
 
+    /**@returns {Lobby} */
     get currentLobby(){return this.#currentLobby;}
 
+    /**@param {Lobby} lobby*/
     set _currentLobby(lobby){
         this.#currentLobby = lobby;
         this.ready = false;
     }
-
+    /** @returns {JSON} JSON of the player suitable for sending to other players*/
     toJSON(){
         return {id: this.id, name: this.name, ready: this.ready};
     }
-
+    /**Extracts parameters from a URL to create an object for Player instantiation
+     * @param {URL} url 
+     * @returns 
+     */
     static paramsFromURL(url){
         return {
             name: url.searchParams.get('name'),
