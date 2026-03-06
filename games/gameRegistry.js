@@ -20,7 +20,11 @@ fs.readdirSync(__dirname)
  */
 function selectGame(lobby, message){
     if(message.type != "game_select"){
-        console.error(`Unknown game type: ${message.game}`);
+        console.error(`Unknown game type: ${message.type}`);
+        return false;
+    }
+    if(!(message.game in GAMES)){
+        console.error(`Unknown game ${message.game}`);
         return false;
     }
     const Game = GAMES[message.game];
