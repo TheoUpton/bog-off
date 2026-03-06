@@ -18,69 +18,81 @@ function joinLobby(player, lobbyId){
     }
     const lobby = Lobbies.get(lobbyId);
     if(!lobby) {
-        player.socket.send(JSON.stringify({type: "error", message: "Lobby not found"}));
+        console.log("lobbyId", lobbyId,"\nLobbies",Lobbies);
+        player.socket.send(JSON.stringify({type: "error", errorCode:"lobby-404", message: "Lobby not found"}));
         return false;
     }
     lobby.addPlayer(player);
-    lobby.broadcast({type: "player_joined", player: player}, player);
+    //does the player's socket point to a different player (different player becomes current player)
+    if(player !== (player=player.socket.player))
+        lobby.broadcast({type: "player_update", player: player, attr:"connected", value: true}, player);
+    else
+        lobby.broadcast({type: "player_joined", player: player}, player);
     player.socket.send(JSON.stringify({type: 'joined', lobby: lobby }))
 }
 
 const selectGame = require("./games/gameRegistry.js");
-
-function startGame(){}
 
 wss.on('connection', (socket, request) => {
     console.log('a player connected')
     
     const url = new URL(request.url, 'http://localhost');
     const playerParams = Player.paramsFromURL(url);
+    //console.log("url",url);
     if(playerParams.privateId === null){
         playerParams.privateId = randomUUID();
         playerParams.id = randomUUID();
-        socket.send(JSON.stringify({type:"player_init", privateId: playerParams.privateId, id: playerParams.id}));
+        socket.send(JSON.stringify({type:"player_init", player:{privateId: playerParams.privateId, id: playerParams.id}}));
     }
     const player = new Player(socket, playerParams);
+    console.log("added player",player._privateId); 
     socket.player = player;
     const lobbyId = url.searchParams.get("lobbyId");
-    if(lobbyId != null) joinLobby(player, lobbyId);
+    if(lobbyId == null || !joinLobby(player, lobbyId)) 
+        socket.send(JSON.stringify({type:"no_lobby"}));
 
     socket.on('message', (data) => {
         const message = JSON.parse(data.toString());
         const player = socket.player;
         var lobby = player.currentLobby;
+        console.log("player.currentLobby:",player.currentLobby)
 
         switch (message.type) {
-            case 'create':
+            case 'create_lobby':
                 message.lobbyId = randomUUID();
                 lobby = new Lobby(message.lobbyId);
                 Lobbies.set(message.lobbyId, lobby);
                 //intentional fall-through to join
-            case 'join':
+            case 'join_lobby':
                 joinLobby(player, message.lobbyId)
                 break;
-            case 'leave':
-                lobby.broadcast({type:"player_left", player: player.id});
+            case 'leave_lobby':
+                lobby.broadcast({type:"player_left", player: player.id}, player);
                 lobby.removePlayer(player);
                 if(lobby.isEmpty()) Lobbies.delete(lobby.id);
+                if(lobby.isReady() && !lobby.isEmpty()) startGame(lobby);
                 break;
-            case 'ready':
-                lobby.readyPlayer(player, message.ready);
-                lobby.broadcast({type:"player_readied", player:player.id, ready: message.ready}, player);
-                if(lobby.isReady() && !lobby.isEmpty()) startGame();
+            case 'player_update':
+                switch (message.attr){
+                    case "name": player.name = message.value; break;
+                    case "ready": lobby.readyPlayer(player, message.value); break;
+                }
+                if(lobby) lobby.broadcast({player,...message}, player);
+                if(lobby.isReady() && !lobby.isEmpty()) lobby.startGame();
                 break;
             default:
-                player.socket.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }))
+                player.socket.send(JSON.stringify({ type: 'error', message: `Unknown message type "${message.type}"` }))
         }
     })
 
     socket.on('close', () => {
+        console.log("hey it died")
         const player = socket.player;
         if(!player) return;
         const lobby = player.currentLobby;
         if(!lobby) return;
         lobby.disconnectedPlayer(player);
-        lobby.broadcast({type: "player_disconnected", player: player.id});
+        lobby.broadcast({type: "player_update", player: player, attr:"connected", value:false});
         if(lobby.isEmpty()) Lobbies.delete(lobby.id);
         console.log(player.id + ' disconnected')
     })

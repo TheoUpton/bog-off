@@ -1,0 +1,7 @@
+.hide{
+    display: none;
+}
+[data-connected="false"]{
+    text-decoration: line-through;
+    color:grey;
+}

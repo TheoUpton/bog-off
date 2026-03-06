@@ -8,7 +8,7 @@ class Lobby {
     #players; 
     /**@type {import('./games/game')} */
     #game;
-    #dcCount = 0; #readyCount = 0; 
+    #dcCount = 0; #readyCount = 0; #startTimeout = null;
 
     /** @param {UUID} id  */
     constructor(id){
@@ -23,9 +23,16 @@ class Lobby {
     addPlayer(player){
         const existing = this.#players.get(player._privateId);
         if(existing === player) return;
-        if(existing && !existing.isConnected) this.#dcCount--;
+        if(existing && !existing.isConnected) {
+            this.#dcCount--;
+            player.socket.player = existing;
+            existing._socket = player.socket;
+            return;
+        }
         this.#players.set(player._privateId, player);
         player._currentLobby = this;
+        console.log("lobby: ", this.toJSON());
+        console.log("player: ", player);
     }
     /** @param {Player} player */
     removePlayer(player){
@@ -46,8 +53,9 @@ class Lobby {
     readyPlayer(player, ready){
         if(player.ready == ready) return;
         player.ready = ready;
-        if(ready) this.#readyCount++;
-        else this.#readyCount--;
+        if(ready) return this.#readyCount++;
+        this.#readyCount--;
+        if(this.#startTimeout) clearTimeout(this.#startTimeout);
     }
     /** @returns {import('./games/game')} */
     get game(){return this.#game;}
@@ -64,6 +72,15 @@ class Lobby {
      */
     isEmpty(){return this.#players.size == this.#dcCount;}
 
+    startGame(){
+        if(this.#startTimeout) clearTimeout(this.#startTimeout);
+        this.#startTimeout = setTimout(() => {
+            this.#startTimeout = null;
+            if(!this.isReady() || this.isEmpty()) return;
+            this.broadcast({type:"start_game"});
+            lobby.game.start();
+        }, 5000);
+    }
     /** Broadcasts a message to all players* that have a connected websocket
      * @param {String} message 
      * @param {Player} ignorePlayer this player will not be broadcast to
@@ -90,15 +107,18 @@ class Player {
      * @param {import('ws')} socket 
      * @param {{privateid: UUID, id: UUID, name: string}} param1 
      */
-    constructor(socket, {privateid, id, name}){
+    constructor(socket, {privateId, id, name}){
+        console.log("creating player", privateId, id, name)
         this.#socket = socket;
-        this.#privateId = privateid;
+        this.#privateId = privateId;
         this.#id = id;
         this.ready = false;
         this.name = name;
     }
     /**@returns {import('ws')} */
-    get socket(){return this.#socket;}
+    get socket(){return this.#socket;} 
+    /**@param {import('ws')} socket*/
+    set _socket(socket){this.#socket = socket;}
 
     /**@returns {UUID} */
     get _privateId(){return this.#privateId;}
