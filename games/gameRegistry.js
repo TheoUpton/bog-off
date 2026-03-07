@@ -14,7 +14,7 @@ fs.readdirSync(__dirname)
 ;
 
 /**
- * @param {import('./lobby').Lobby} lobby 
+ * @param {import('../lobby').Lobby} lobby 
  * @param {import('ws').RawData} message 
  * @returns 
  */
@@ -28,7 +28,7 @@ function selectGame(lobby, message){
         return false;
     }
     const Game = GAMES[message.game];
-    const game = new Game(lobby);
+    const game = new Game(lobby.readOnly());
     lobby.setGame(game);
 }
 module.exports = selectGame

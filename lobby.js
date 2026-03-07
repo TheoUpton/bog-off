@@ -5,15 +5,26 @@ class Lobby {
     /**@type {UUID}*/
     #id; 
     /**@type {Map<UUID, Player>}*/
-    #players; 
+    #players= new Map(); 
     /**@type {import('./games/game')} */
     #game;
+    #readOnly; #listeners;
     #dcCount = 0; #readyCount = 0; #startTimeout = null;
 
     /** @param {UUID} id  */
     constructor(id){
         this.#id = id;
-        this.#players = new Map();
+        this.#readOnly = (() => {
+            const self = this;
+            return {
+                //[self.getPlayer.name]: (playerId) => self.getPlayer(playerId),
+                [self.addListener.name]: (method, callback) => self.addListener(method, callback),
+                [self.removeListener.name]: (method, callback) => self.removeListener(method, callback),
+                [self.addPlayer.name]: () => console.error("addPlayer cannot be called. Object is read only"),
+                [self.removePlayer.name]: () => console.error("removePlayer cannot be called. Object is read only"),
+                forEachPlayer: (callback) => self.#players.forEach(player => callback(player.readOnly())) 
+            }
+        })();
     }
 
     /** @returns {UUID} */
@@ -81,6 +92,25 @@ class Lobby {
             lobby.game.start();
         }, 5000);
     }
+
+    readOnly(){return this.#readOnly;}
+
+    addListener(method, callback){
+        var listeners = this.#listeners.get(method.name);
+        if(!listeners) {
+            this.#listeners.set(method.name, new Set());
+            listeners = this.#listeners.get(method.name);
+        }
+        listeners.add(callback);
+    }
+
+    removeListener(method, callback){
+        var listeners = this.#listeners.get(method.name);
+        if(!listeners) return;
+        listeners.delete(callback);
+        if(listeners.size==0) this.#listeners.delete(method.name);
+    }
+
     /** Broadcasts a message to all players* that have a connected websocket
      * @param {String} message 
      * @param {Player} ignorePlayer this player will not be broadcast to
@@ -101,7 +131,7 @@ class Lobby {
 }
 
 class Player {
-    #socket; #currentLobby; #id; #privateId
+    #socket; #currentLobby; #id; #privateId;#readOnly;
     /**
      * 
      * @param {import('ws')} socket 
@@ -114,7 +144,21 @@ class Player {
         this.#id = id;
         this.ready = false;
         this.name = name;
+        this.#readOnly = (() => {
+            const self = this;
+            return {
+                /**@param {JSON} message */
+                send: (message) => self.socket.send(JSON.stringify(message)),
+                get ready() {return self.ready;},
+                get id() {return self.id;},
+                get name() {return self.name;},
+                get isConnected() {return self.isConnected;},
+                get currentLobby() {return self.currentLobby;}
+            };
+        })();
     }
+    readOnly(){return this.#readOnly;}
+
     /**@returns {import('ws')} */
     get socket(){return this.#socket;} 
     /**@param {import('ws')} socket*/

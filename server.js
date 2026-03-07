@@ -7,7 +7,28 @@ const server = http.createServer(app)
 const wss = new WebSocketServer({ server })
 const { randomUUID } = require('crypto');
 const {Lobby, Player} = require("./lobby");
-const Lobbies = new Map();
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+
+const Lobbies = (() => {
+    /**@type {Map<UUID, import('./lobby.js').Lobby>} */
+    const lobbies = new Map();
+    let lobbyCount = 0;
+    lobbies.generateId = () => {
+        if (isDev) return String(++lobbyCount);
+        /**@type {UUID} */
+        let id;
+        do {id = randomUUID();} while (lobbies.has(id));
+        return id;
+    };
+    lobbies.create = () => {
+        const id = this.generateId();
+        lobbies.set(id, new Lobby(id));
+        return lobbies.get(id);
+    }
+    return lobbies;
+})();
 
 app.use(express.static('public'))
 
@@ -59,9 +80,8 @@ wss.on('connection', (socket, request) => {
 
         switch (message.type) {
             case 'create_lobby':
-                message.lobbyId = randomUUID();
-                lobby = new Lobby(message.lobbyId);
-                Lobbies.set(message.lobbyId, lobby);
+                lobby = Lobbies.create();
+                message.lobbyId = lobby.id;
                 //intentional fall-through to join
             case 'join_lobby':
                 joinLobby(player, message.lobbyId)

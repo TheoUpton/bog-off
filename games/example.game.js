@@ -8,9 +8,9 @@ class Example extends Game{
         super(lobby)
     }
 
-    receive(player, message) {}
+    receiveMessage(player, message){
 
-    onEnd() {}
+    }
 }
 
 module.export = Example
