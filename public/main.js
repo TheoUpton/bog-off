@@ -1,9 +1,11 @@
+const isDev = window.location.hostname === 'localhost';
+
 class Player{
     onUpdate = {};
     constructor(json){for (const key in json) this[key]=json[key];}
     update(attribute, value){
         this[attribute] = value;
-        this.onUpdate[attribute](value);
+        this.onUpdate[attribute]?.(value);
     }
 }
 const me = new Player();
@@ -12,9 +14,9 @@ me.privateId = localStorage.getItem("privateId");
 me.id = localStorage.getItem("id");
 me.name = localStorage.getItem("name")
 if(me.name) document.getElementById("player-name").value = me.name;
-console.log(me);
+if(isDev) console.log(me);
 
-var customQuery = window.location.search == "" ? "?" :"";
+let customQuery = window.location.search == "" ? "?" :"";
 customQuery += me.privateId ? `&privateId=${me.privateId}` : "";
 customQuery += me.id ? `&id=${me.id}` : "";
 customQuery += me.name ? `&name=${me.name}` : "";
@@ -25,6 +27,50 @@ const socket = new WebSocket(`${protocol}://${window.location.host}${window.loca
 const allPages = document.getElementsByClassName("page");
 allPages.hideAll = () => Array.from(allPages).forEach(page => page.classList.add("hide"));
 
+let GAMES;
+import {MainClientAPI as API, ClientHandler} from "./MainAPI.js";
+class Handler extends ClientHandler{
+    client_init(client){
+        for (var key in client) me.update(key, client[key]); 
+        localStorage.setItem("privateId", me.privateId);
+        localStorage.setItem("id", me.id);
+    }
+    join_lobby(lobbyId, clients){
+        lobby = new ClientLobby(lobbyId, clients);
+        lobby.forEach(client => lobbyDOM.addPlayer(client));
+        lobby.addListener(lobby.addClient, lobbyDOM.addPlayer);
+        lobby.addListener(lobby.removeClient, lobbyDOM.removePlayer);
+        allPages.hideAll();
+        lobbyDOM.classList.remove("hide");
+        history.pushState({},'',`/?&lobbyId=${lobby.id}`);
+    }
+    player_joined(client){lobby.addClient(new Player(client))}
+    client_left(id){lobby.removeClient({id})}
+    update_client({id, attribute, value}){lobby.updateClient(id, attribute, value)}
+    game_keys(keys){GAMES = Object.freeze(keys)}
+    game_selected(game){gameSelected(game)}
+    update_id(){}
+    error(message){console.error(message)}
+    unknown_error_code(error){
+        
+    }
+    lobby_404(message){
+        history.pushState({},'','');
+        console.error(message)
+    }
+}
+const handler = new Handler();
+
+
+const api = new API(
+    (message) => {
+        if (isDev) console.debug("outgoing:", message)
+        socket.send(JSON.stringify(message))
+    },
+    handler
+);
+
+/**@type {ClientLobby} */
 var lobby;
 const lobbyDOM  =  (() => {
     const self = document.getElementById("lobby");
@@ -60,118 +106,99 @@ const lobbyDOM  =  (() => {
 
 function requestNewLobby(){
     if(lobby) return console.error(`Currently in lobby ${lobby.id}`);
-    socket.send(JSON.stringify({type:"create_lobby"}));
+    console.log("new lobby");
+    api.send.create_lobby();
 }
+document.getElementById("new-lobby").addEventListener("click", requestNewLobby);
 
 function requestJoinLobby(){
     if(lobby) return console.error(`Currently in lobby ${lobby.id}`);
     const lobbyID = document.getElementById("input-lobby-id").value;
-    socket.send(JSON.stringify({type:"join_lobby", lobbyId: lobbyID}));
+    api.send.join_lobby(lobbyID);
 }
+document.getElementById("submit-lobby").addEventListener("click", requestJoinLobby);
 
-function receiveLobbyJoined(lobbyJSON){
-    lobby = new Lobby(lobbyJSON.id, lobbyJSON.players);
-    lobby.forEachPlayer(player => lobbyDOM.addPlayer(player));
-    lobby.addListener(lobby.addPlayer, lobbyDOM.addPlayer);
-    lobby.addListener(lobby.removePlayer, lobbyDOM.removePlayer);
-    allPages.hideAll();
-    lobbyDOM.classList.remove("hide");
-    history.pushState({},'',`/?&lobbyId=${lobbyJSON.id}`);
-}
 function requestLeaveLobby(){
-    socket.send(JSON.stringify({type:"leave_lobby"}))
+    api.send.leave_lobby();
     lobby = null;
     lobbyDOM.clear();
     const homeDOM = document.getElementById("home");
     allPages.hideAll();
     homeDOM.classList.remove("hide");
 }
+document.getElementById("leave-lobby").addEventListener("click", requestLeaveLobby);
 
 function updateMeName(value){
     if(value == me.name) return;
     me.name = value;
-    socket.send(JSON.stringify({type:"player_update", attr:"name", value:value}));
+    api.send.client_update({attribute: "name", value});
     localStorage.setItem("name", value)
 }
+document.getElementById("player-name").addEventListener("blur", (event) => updateMeName(event.target.value));
+document.getElementById("player-name").addEventListener("keydown", (event) => {if(event.key === 'Enter') event.target.blur()});
 
-
-socket.addEventListener('open', () => {
-    console.log('connected to server')
-    //socket.send(JSON.stringify({ type: 'join', name: 'Alice' }))
-})
+document.getElementById("client-ready").addEventListener("change", (event) => {api.send.client_update({attribute: "ready", value: event.target.checked})})
 
 socket.addEventListener('message', (event) => {
+    if(isDev) console.debug("incoming:", event.data)
     const message = JSON.parse(event.data);
-    console.log(message);
-    handleMessage(event.data);
+    api.receive(message);
 });
+let currentAbort = null;
+async function gameSelected(game){
+    if(lobby && game.name == lobby.game.name) return;
+    if(!(game.name in GAMES)) return console.error(`game "${game.name} is not a valid game.\nValid games are:\n${GAMES}"`);
+    //abort previous game selections
+    if(currentAbort) currentAbort.abort();
+    const controller = new AbortController();
+    currentAbort = controller;
+    //remove all old game elements
+    document.getElementById("game").replaceChildren();
+    const oldGameElems = document.getElementsByClassName("game");
+    Array.from(oldGameElems).forEach(elem => elem.remove());
+    //fetch new game elements
+    const html = await fetch(`/games/${game.name}.html`, {signal: controller.signal}).then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    //null the game as state from here on could be corrupted
+    lobby.game=null;
+    //swap old game html with new game html
+    const gameElem = doc.getElementById("game");
+    const oldGameElem = document.getElementById("game");
+    oldGameElem.replaceWith(gameElem);
+    //append all head elements
+    const headGameElems = doc.head.getElementsByClassName("game");
+    await Promise.all([...headGameElems].map(el => new Promise(resolve => {
+        el.onload = resolve;
+        document.head.appendChild(el);
+    })));
+    if(controller.signal.aborted) return;
 
-function handleMessage(message){
-    switch (message.type){
-        case "player_init": 
-            console.log(message.player);
-            for (key in message.player) me.update(key, message.player[key]); 
-            localStorage.setItem("privateId", me.privateId);
-            localStorage.setItem("id", me.id);
-            break;
-        case "joined": receiveLobbyJoined(message.lobby); break;
-        case "player_joined": lobby.addPlayer(new Player(message.player)); break;
-        case "player_left": lobby.removePlayer(message.player); break;
-        case "player_update": lobby.updatePlayer(message.player.id, message.attr, message.value); break;
-        case "game_selected":break;
-        case "error": 
-            if(message.errorCode = "lobby-404") history.pushState({},'','');
-            console.error(message.message); 
-            break;
-        default: break;
-    }
+    lobby.game = new gameClass(socket, lobby, me);
+    initGame(game);
+    api.send.game_set(game.name);
+}
+function initGame(game){
+    if(!lobby || !lobby.game) return;
+    if(game.name != lobby.game.name) return; 
+    lobby.game.receiveMessage(game);
 }
 
-class Lobby{
-    #id; #players = new Map(); 
-    /**@type {Map<string, Set<function>>} */
-    #listeners = new Map();
+import { Lobby } from "./lobby.js";
+class ClientLobby extends Lobby{
+    /**@type {Game} */
+    game;
 
     constructor(id, players){
-        this.#id = id;
-        players.forEach(player => {if(player.id != me.id) this.addPlayer(new Player(player))});
+        super(id)
+        players?.forEach?.(player => {if(player.id != me.id) this.addClient(new Player(player))});
     }
 
-    get id(){return this.#id;}
-
-    addPlayer(player){
-        this.#players.set(player.id, player);
-        const listeners = this.#listeners.get(this.addPlayer.name);
-        if(listeners) listeners.forEach(listener => listener(player));
-    }
-
-    removePlayer(playerid){
-        this.#players.delete(playerid);
-        const listeners = this.#listeners.get(this.removePlayer.name);
-        if(listeners) listeners.forEach(listener => listener(playerid));
-    }
-
-    updatePlayer(playerid, attribute, value){
-        const player = this.#players.get(playerid);
-        player.update(attribute, value);
+    updateClient(clientId, attribute, value){
+        const client = this.getClient(clientId);
+        client.update(attribute, value);
         if(attribute != "id") return;
-        this.#players.set(value, player);
-        this.#players.delete(playerid);
+        this.removeClient(clientId);
+        this.addClient(client.id, client);
     }
-    addListener(method, callback){
-        var listeners = this.#listeners.get(method.name);
-        if(!listeners) {
-            this.#listeners.set(method.name, new Set());
-            listeners = this.#listeners.get(method.name);
-        }
-        listeners.add(callback);
-    }
-    removeListener(method, callback){
-        var listeners = this.#listeners.get(method.name);
-        if(!listeners) return;
-        listeners.delete(callback);
-        if(listeners.size==0) this.#listeners.delete(method.name);
-    }
-    forEachPlayer(callback){this.#players.forEach(callback);}
 }
 

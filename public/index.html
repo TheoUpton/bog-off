@@ -5,27 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bog Off</title>
     <link rel="stylesheet" href="./style.css">
-    <script id="main.js" src="/main.js" defer></script>
+    <!---<script src="/game.js"></script>
+    <script src="/API.js"></script>
+    <script src="/MainAPi.js"></script>
+    <script src="/lobby.js"></script>--->
+    <script id="main.js" type="module" src="/main.js" defer></script>
     
 </head>
 <body>
     <h1>Bog Off</h1>
     <section id="profile">
         <label>enter name</label>
-        <input type="text" id="player-name" onfocusout="updateMeName(this.value)" onkeydown="if(event.key === 'Enter') this.blur()">
+        <input type="text" id="player-name">
     </section>
     <section id="home" class="page" >
-        <button id="new-lobby" onclick="requestNewLobby()">start new lobby</button>
+        <button id="new-lobby">start new lobby</button>
         <label>enter lobby ID</label>
         <input type="text" id="input-lobby-id" autocomplete="off">
-        <button id="submit-lobby" onclick="requestJoinLobby()">submit</button>
+        <button id="submit-lobby">submit</button>
     </section>
     <section id="lobby" class="page hide">
         Lobby
-        <button id="leave-lobby" onclick="requestLeaveLobby()">Leave Lobby</button>
+        <button id="leave-lobby">Leave Lobby</button>
         <label>Ready?</label>
-        <input type="checkbox" onchange="socket.send(JSON.stringify({type:'player_update', attr:'ready', value:this.checked}))" autocomplete="off">
-        <ol id="lobby-players"></ol>
+        <input id="client-ready" type="checkbox" autocomplete="off">
+        <ol id="lobby-players"></ol> 
     </section>
     <section id="game" class="page hide"></section>
 </body>
