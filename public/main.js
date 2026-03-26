@@ -1,6 +1,7 @@
 const isDev = window.location.hostname === 'localhost';
+import {generateWrapper} from "./API.js";
 
-class Player{
+export class Player{
     onUpdate = {};
     constructor(json){for (const key in json) this[key]=json[key];}
     update(attribute, value){
@@ -21,19 +22,20 @@ customQuery += me.privateId ? `&privateId=${me.privateId}` : "";
 customQuery += me.id ? `&id=${me.id}` : "";
 customQuery += me.name ? `&name=${me.name}` : "";
 
+if(isDev) console.debug(customQuery);
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
 const socket = new WebSocket(`${protocol}://${window.location.host}${window.location.search}${customQuery}`)
 
 const allPages = document.getElementsByClassName("page");
 allPages.hideAll = () => Array.from(allPages).forEach(page => page.classList.add("hide"));
 
-let GAMES;
+let GAME_KEYS;
 import {MainClientAPI as API, ClientHandler} from "./MainAPI.js";
 class Handler extends ClientHandler{
     client_init(client){
         for (var key in client) me.update(key, client[key]); 
-        localStorage.setItem("privateId", me.privateId);
-        localStorage.setItem("id", me.id);
+        if(me.privateId) localStorage.setItem("privateId", me.privateId);
+        if(me.id) localStorage.setItem("id", me.id);
     }
     join_lobby(lobbyId, clients){
         lobby = new ClientLobby(lobbyId, clients);
@@ -47,8 +49,36 @@ class Handler extends ClientHandler{
     player_joined(client){lobby.addClient(new Player(client))}
     client_left(id){lobby.removeClient({id})}
     update_client({id, attribute, value}){lobby.updateClient(id, attribute, value)}
-    game_keys(keys){GAMES = Object.freeze(keys)}
-    game_selected(game){gameSelected(game)}
+    game_keys(keys){GAME_KEYS = Object.freeze(new Set(keys))}
+    #currentAbort = null
+    async game_set(ack_code, gameName){
+        if(lobby && gameName == lobby.game?.name) return false;
+        if(!GAME_KEYS.has(gameName)) 
+            return console.error(`game "${gameName} is not a valid game.\nValid games are:\n${GAME_KEYS}"`);
+        if(this.#currentAbort) this.#currentAbort.abort();
+        if(!lobby.games.has(gameName)){
+            const controller = new AbortController();
+            this.#currentAbort = controller;
+            //lobby.game=null;
+            const lobbyProxy = lobby.createProxy();
+            /**@type {import("./base-game.js")}*/
+            const {GameAPI, Game, ClientHandler} = await import(`./games/${gameName}/game.js`);
+            const game = await Game.create();
+            game.lobby = lobbyProxy;
+            const handler = new ClientHandler();
+            handler.game = game;
+            const receiverKey = JSON.stringify({type: "game", name:game.name});
+            const sender = generateWrapper(api.sender, receiverKey);
+            //const sender = (message) => api.sender({type:"game_message", forward: message});
+            const gameAPI = new GameAPI(sender, handler);
+            game._api = gameAPI;
+            this.api.receivers.set(receiverKey, gameAPI.receive);
+            if(controller.signal.aborted) return false;
+            lobby.games.set(gameName, game);
+        }
+        lobby.game = lobby.games.get(gameName);
+        api.send.game_set_ack(ack_code, gameName);
+    }
     update_id(){}
     error(message){console.error(message)}
     unknown_error_code(error){
@@ -56,7 +86,7 @@ class Handler extends ClientHandler{
     }
     lobby_404(message){
         history.pushState({},'','');
-        console.error(message)
+        console.warn(message)
     }
 }
 const handler = new Handler();
@@ -144,38 +174,32 @@ socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
     api.receive(message);
 });
-let currentAbort = null;
-async function gameSelected(game){
-    if(lobby && game.name == lobby.game.name) return;
-    if(!(game.name in GAMES)) return console.error(`game "${game.name} is not a valid game.\nValid games are:\n${GAMES}"`);
-    //abort previous game selections
-    if(currentAbort) currentAbort.abort();
-    const controller = new AbortController();
-    currentAbort = controller;
-    //remove all old game elements
-    document.getElementById("game").replaceChildren();
-    const oldGameElems = document.getElementsByClassName("game");
-    Array.from(oldGameElems).forEach(elem => elem.remove());
-    //fetch new game elements
-    const html = await fetch(`/games/${game.name}.html`, {signal: controller.signal}).then(r => r.text());
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    //null the game as state from here on could be corrupted
-    lobby.game=null;
-    //swap old game html with new game html
-    const gameElem = doc.getElementById("game");
-    const oldGameElem = document.getElementById("game");
-    oldGameElem.replaceWith(gameElem);
-    //append all head elements
-    const headGameElems = doc.head.getElementsByClassName("game");
-    await Promise.all([...headGameElems].map(el => new Promise(resolve => {
-        el.onload = resolve;
-        document.head.appendChild(el);
-    })));
-    if(controller.signal.aborted) return;
 
-    lobby.game = new gameClass(socket, lobby, me);
-    initGame(game);
-    api.send.game_set(game.name);
+let currentAbort = null;
+async function gameSelected(gameName){
+    if(lobby && gameName == lobby.game?.name) return false;
+    if(!GAME_KEYS.has(gameName)) 
+        return console.error(`game "${gameName} is not a valid game.\nValid games are:\n${GAME_KEYS}"`);
+    if(currentAbort) currentAbort.abort();
+    if(!lobby.games.has(gameName)){
+        const controller = new AbortController();
+        currentAbort = controller;
+        //lobby.game=null;
+        const lobbyProxy = lobby.createProxy();
+        const {GameAPI, Game, Handler} = await import(`./games/${gameName}/game.js`);
+        const game = await Game.create();
+        game._lobby = lobbyProxy;
+        const handler = new Handler();
+        handler.game = game;
+        const sender = (message) => api.sender({type:"game_message", forward: message});
+        const gameAPI = new GameAPI(sender, handler);
+        game._api = gameAPI;
+        if(controller.signal.aborted) return false;
+        lobby.games.set(gameName, game);
+    }
+    lobby.game = lobby.games.get(gameName);
+    api.send.game_set(ack_code, selectedGame.name);
+    //return true;
 }
 function initGame(game){
     if(!lobby || !lobby.game) return;
@@ -187,6 +211,7 @@ import { Lobby } from "./lobby.js";
 class ClientLobby extends Lobby{
     /**@type {Game} */
     game;
+    games = new Map();
 
     constructor(id, players){
         super(id)
@@ -199,6 +224,10 @@ class ClientLobby extends Lobby{
         if(attribute != "id") return;
         this.removeClient(clientId);
         this.addClient(client.id, client);
+    }
+    _generateClientProxy(client){
+        const clientProxy = client.proxy;
+        return clientProxy;
     }
 }
 

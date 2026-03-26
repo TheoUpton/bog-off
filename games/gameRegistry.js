@@ -3,10 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import fs from 'fs';
 
-/**
- *@type {Object.<string, import('./game')>}
- */
-const GAMES = {}
+/**@type {Object.<string, import('./game').Game>}*/
+export const GAMES = {}
 
 /**fs.readdirSync(__dirname)
     .filter(file => file.endsWith('.game.js') && file !== 'example.game.js')
@@ -23,16 +21,18 @@ const files = fs.readdirSync(__dirname)
     .filter(file => file.endsWith('.game.js') && file !== 'example.game.js');
 
 await Promise.all(files.map(async file => {
-    const GameClass = (await import(`./${file}`)).default;
+    const path = "./" + file;
+    const GameClass = (await import(path)).Game;
     GAMES[GameClass.gameName] = GameClass;
 }));
+Object.freeze(GAMES);
 
-/**
+/*
  * @param {import('../lobby').Player} player 
  * @param {import('ws').RawData} message 
  * @returns 
- */
-function selectGame(player, message){
+ 
+export function selectGame(player, message){
     if(message.type != "game_select"){
         console.error(`Unknown game type: ${message.type}`);
         return false;
@@ -43,8 +43,6 @@ function selectGame(player, message){
     }
     player.gameSelected = GAMES[message.game];
     return true;
-}
+}*/
 
 export function gameKeys(){ return Object.keys(GAMES);}
-
-//module.exports = {selectGame, gameKeys}
