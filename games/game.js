@@ -1,4 +1,4 @@
-import {Client} from "../public/lobby.js"
+import {Client} from "../public/shared/lobby.js"
 export class Game {
     #lobby; #phase = Game.phases.empty; 
     /**@type {Set} */
@@ -14,7 +14,7 @@ export class Game {
         if (new.target === Game) throw new Error('Game is abstract');
         this.clear();
     }
-    /** @returns {Omit<import('../lobby').ServerLobby, "api"> & {api:import("../public/base-gameAPI.js").LobbyAPI}}} */
+    /** @returns {Omit<import('../lobby').ServerLobby, "api"> & {api:import("../public/shared/base-gameAPI.js").LobbyAPI}}} */
     get lobby(){return this.#lobby;}
     set _lobby(lobby){this.#lobby = lobby;}
     get phase(){return this.#phase;}
@@ -57,7 +57,7 @@ export class Game {
         this.#game_loaded_acks.clear();
         this.lobby.api.broadcast.start();
     }
-    /**@param {Omit<import("../lobby.js").ServersideClient, "api"> & {api: import("../public/base-gameAPI.js").ServerAPI}} client  */
+    /**@param {Omit<import("../lobby.js").ServersideClient, "api"> & {api: import("../public/shared/base-gameAPI.js").ServerAPI}} client  */
     client_reconnected(client){
         if(client.type !== Client.type.player){} 
         switch(this.phase){
@@ -66,8 +66,8 @@ export class Game {
     }
     _gameOver(){}
 }
-import {AbstractServerHandler} from "../public/base-gameAPI.js";
-import {ServerHandler as BaseServerHandler} from "../public/API.js";
+import {AbstractServerHandler} from "../public/shared/base-gameAPI.js";
+import {ServerHandler as BaseServerHandler} from "../public/shared/API.js";
 export class ServerHandler extends AbstractServerHandler(BaseServerHandler){
 //}
 //export class Handler extends ServerHandler{

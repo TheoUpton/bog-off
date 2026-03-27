@@ -1,5 +1,5 @@
 const isDev = window.location.hostname === 'localhost';
-import {generateWrapper} from "./API.js";
+import {generateWrapper} from "./shared/API.js";
 
 export class Player{
     onUpdate = {};
@@ -100,8 +100,8 @@ const api = new API(
     handler
 );
 
-/**@type {ClientLobby} */
-var lobby;
+/**@type {import("./shared/lobby.js").Lobby} */
+let lobby;
 const lobbyDOM  =  (() => {
     const self = document.getElementById("lobby");
     const players = self.querySelector("#lobby-players");
@@ -207,7 +207,7 @@ function initGame(game){
     lobby.game.receiveMessage(game);
 }
 
-import { Lobby } from "./lobby.js";
+import { Lobby } from "./shared/lobby.js";
 class ClientLobby extends Lobby{
     /**@type {Game} */
     game;

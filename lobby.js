@@ -6,8 +6,8 @@ for (const key of gameKeys()){
     gameAPIs.set(key, {APIClass: ServerAPI, LobbyAPI, HandlerClass: ServerHandler});
 };
 import {Game} from "./games/game.js";
-import {Lobby} from "./public/lobby.js";
-import { generateWrapper } from "./public/API.js";
+import {Lobby} from "./public/shared/lobby.js";
+import { generateWrapper } from "./public/shared/API.js";
 export class ServerLobby extends Lobby {
     /**@type {import('./games/game.js')} */
     #game;
@@ -15,7 +15,7 @@ export class ServerLobby extends Lobby {
 
     /** @param {UUID} id  */
     constructor(id){super(id);}
-    /**@type {import("./public/MainAPI.js").MainLobbyAPI} */
+    /**@type {import("./public/shared/MainAPI.js").MainLobbyAPI} */
     get api(){return super.api;}
     /** @param {ServersideClient} client */
     addClient(client){
@@ -27,7 +27,7 @@ export class ServerLobby extends Lobby {
     }
     /** @param {ServersideClient} client */
     removeClient(client){
-        this.readyPlayer(client, false);
+        client.ready = false;
         client._lobby = null;
         super.removeClient(client);
     }
@@ -136,7 +136,7 @@ export class ServerLobby extends Lobby {
             }
         })();
         
-        /** @type {import("./public/base-gameAPI.js")}*/
+        /** @type {import("./public/shared/base-gameAPI.js")}*/
         const APIs = gameAPIs.get(game.NAME);
         const broadcaster = this.api.broadcaster;
         const receiverKey = JSON.stringify({type: "game", name: game.NAME});
@@ -150,8 +150,8 @@ export class ServerLobby extends Lobby {
         return game;
     }
     static #APIFactory = class {
-        /** @type {typeof import("./public/API.js").ServerAPI} */ APIClass;
-        /** @type {typeof import("./public/API.js").ClientHandler} */ HandlerClass;
+        /** @type {typeof import("./public/shared/API.js").ServerAPI} */ APIClass;
+        /** @type {typeof import("./public/shared/API.js").ClientHandler} */ HandlerClass;
         
         constructor({APIClass, HandlerClass, game, receiverKey, ack_code}){
             this.APIClass = APIClass;
@@ -199,7 +199,7 @@ export class ServerLobby extends Lobby {
         return clientProxy;
     }
 }
-import { Client } from "./public/lobby.js";
+import { Client } from "./public/shared/lobby.js";
 export class ServersideClient extends Client{    
     constructor({privateId, id, name, game_selected = null, type}){
         super({privateId, id, name, type});

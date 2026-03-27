@@ -5,7 +5,7 @@ import {randomUUID} from "crypto";
 
 import {ServerLobby as Lobby, ServersideClient as Client} from "./lobby.js";
 import {GAMES, gameKeys} from "./games/gameRegistry.js";
-import { MainServerAPI as API, ServerHandler, MainLobbyAPI as LobbyAPI } from "./public/MainAPI.js";
+import { MainServerAPI as API, ServerHandler, MainLobbyAPI as LobbyAPI } from "./public/shared/MainAPI.js";
 
 import config from "./devconfig.js";
 
@@ -136,8 +136,8 @@ class Handler extends ServerHandler{
     }
 
     leave_lobby(){
-        this.api.broadcast.player_left();
-        this.lobby.removePlayer(this.client);
+        this.api.broadcast.client_left();
+        this.lobby.removeClient(this.client);
         if(this.lobby.isEmpty()) Lobbies.delete(this.lobby.id);
         if(this.lobby.isReady() && !this.lobby.isEmpty()) startGame(this.lobby);
         this.lobby = null;

@@ -1,4 +1,4 @@
-export {ClientAPI as GameAPI} from "./base-gameAPI.js";
+export {ClientAPI as GameAPI} from "./shared/base-gameAPI.js";
 
 export class Game{
     //must match folder name
@@ -12,7 +12,7 @@ export class Game{
     get _dom(){return this.#dom;}
     get name(){return this.constructor.name;}
     #me;
-    /**@type {import("./lobby.js").Client} */
+    /**@type {import("./shared/lobby.js").Client} */
     get me(){return this.#me;}
     set me(client){this.#me = client;}
 
@@ -44,8 +44,8 @@ export class Game{
         this._dom.headElems.forEach(elem => elem.disabled = true);
     }
 }
-import {AbstractClientHandler} from "./base-gameAPI.js";
-import {ClientHandler as BaseHandler} from "./API.js";
+import {AbstractClientHandler} from "./shared/base-gameAPI.js";
+import {ClientHandler as BaseHandler} from "./shared/API.js";
 export class ClientHandler extends AbstractClientHandler(BaseHandler){
     get client(){return super.client;}
     set client(client){

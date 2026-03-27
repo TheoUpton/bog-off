@@ -25,13 +25,15 @@ export class ServerAPI extends API.ServerAPI{
         }
     }*/
     get receive(){
-        /**@type {import("../games/game.js").ServerHandler} */
+        /**@type {import("../../games/game.js").ServerHandler} */
         const handler = this.handler;
         return (message) => {
             if(super.receive(message) !== false) return true;
             switch(message.type){
-                case handler.state_set.name: return handler.state_set();
+                case handler.state_set.name: handler.state_set(); break;
+                default: return false;
             }
+            return true;
         }
     }
 }
@@ -64,7 +66,7 @@ export class LobbyAPI extends API.LobbyAPI{
 }
 
 export class ClientAPI extends API.ClientAPI{
-    /**@param {import("./base-game.js").ClientHandler} handler */
+    /**@param {import("../base-game.js").ClientHandler} handler */
     constructor(sender, handler){super(sender, handler);}
     get send() {
         const sender = this.sender;
@@ -77,7 +79,7 @@ export class ClientAPI extends API.ClientAPI{
         };
     }
     get receive(){
-        /**@type {import("./base-game.js").ClientHandler} */
+        /**@type {import("../base-game.js").ClientHandler} */
         const handler = this.handler;
         return (message) => {
             if(super.receive(message) !== false) return true;
@@ -94,7 +96,7 @@ export const AbstractClientHandler = (Handler) => class extends Handler{//}
 //export class ClientHandler extends API.ClientHandler{
     /**@type {ClientAPI} */
     api;//get api(){return super.api;}
-    /**@type {import("./base-game.js").Game} */
+    /**@type {import("../base-game.js").Game} */
     game;
     //get game(){return this.#game;}
     //set game(game){this.#game = game;}
