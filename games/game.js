@@ -2,7 +2,7 @@ import {Client} from "../public/shared/lobby.js"
 export class Game {
     #lobby; #phase = Game.phases.empty; 
     /**@type {Set} */
-    #game_set_acks = new Set();//#emitters = new Map(); 
+    #game_set_acks = new Set(); 
     _initial_state = {global: undefined, client: new Map()}
     static phases = Object.freeze({
         empty: new Number(0),
@@ -18,7 +18,6 @@ export class Game {
     get lobby(){return this.#lobby;}
     set _lobby(lobby){this.#lobby = lobby;}
     get phase(){return this.#phase;}
-    //set _phase(phase){this.#phase = phase;}
     get NAME(){return this.constructor.gameName;}
     get MIN_PLAYERS(){return this.constructor.minPlayers;}
     get MAX_PLAYERS(){return this.constructor.maxPlayers;}
@@ -69,11 +68,9 @@ export class Game {
 import {AbstractServerHandler} from "../public/shared/base-gameAPI.js";
 import {ServerHandler as BaseServerHandler} from "../public/shared/API.js";
 export class ServerHandler extends AbstractServerHandler(BaseServerHandler){
-//}
-//export class Handler extends ServerHandler{
     #game;
     constructor(game){super(); this.#game = game;}    
-    /**@returns  {Game}  */
-    get game(){return this.#game;}
+    /**@type  {Game}  */ game;
+    //get game(){return this.#game;}
     state_set(){this.game._game_loaded_ack(this.client);}
 }

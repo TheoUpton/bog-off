@@ -1,9 +1,11 @@
 const isDev = window.location.hostname === 'localhost';
+import {MainClientAPI as API, ClientHandler} from "./shared/MainAPI.js";
 import {generateWrapper} from "./shared/API.js";
 
 export class Player{
     onUpdate = {};
     constructor(json){for (const key in json) this[key]=json[key];}
+    get proxy(){return this;}
     update(attribute, value){
         this[attribute] = value;
         this.onUpdate[attribute]?.(value);
@@ -30,7 +32,7 @@ const allPages = document.getElementsByClassName("page");
 allPages.hideAll = () => Array.from(allPages).forEach(page => page.classList.add("hide"));
 
 let GAME_KEYS;
-import {MainClientAPI as API, ClientHandler} from "./MainAPI.js";
+
 class Handler extends ClientHandler{
     client_init(client){
         for (var key in client) me.update(key, client[key]); 
@@ -52,9 +54,11 @@ class Handler extends ClientHandler{
     game_keys(keys){GAME_KEYS = Object.freeze(new Set(keys))}
     #currentAbort = null
     async game_set(ack_code, gameName){
-        if(lobby && gameName == lobby.game?.name) return false;
+        //if(lobby && gameName == lobby.game?.name) return false;
+        if(!lobby) return console.error(`Client not in a lobby, game cannot be set`)
         if(!GAME_KEYS.has(gameName)) 
             return console.error(`game "${gameName} is not a valid game.\nValid games are:\n${GAME_KEYS}"`);
+        lobbyDOM.game_select_animation();
         if(this.#currentAbort) this.#currentAbort.abort();
         if(!lobby.games.has(gameName)){
             const controller = new AbortController();
@@ -71,13 +75,15 @@ class Handler extends ClientHandler{
             const sender = generateWrapper(api.sender, receiverKey);
             //const sender = (message) => api.sender({type:"game_message", forward: message});
             const gameAPI = new GameAPI(sender, handler);
-            game._api = gameAPI;
+            game.me = me;
+            game.api = gameAPI;
             this.api.receivers.set(receiverKey, gameAPI.receive);
             if(controller.signal.aborted) return false;
             lobby.games.set(gameName, game);
         }
         lobby.game = lobby.games.get(gameName);
         api.send.game_set_ack(ack_code, gameName);
+        
     }
     update_id(){}
     error(message){console.error(message)}
@@ -90,7 +96,6 @@ class Handler extends ClientHandler{
     }
 }
 const handler = new Handler();
-
 
 const api = new API(
     (message) => {
@@ -113,6 +118,7 @@ const lobbyDOM  =  (() => {
     const playerMap = new Map();
 
     self.addPlayer = (player) => {
+        if(player === me) return;
         const clonePlayer = _playerDom.cloneNode(true);
         playerMap.set(player.id, clonePlayer);
         const cloneReady = _playerReady.cloneNode(true);
@@ -131,12 +137,15 @@ const lobbyDOM  =  (() => {
         playerMap.delete(playerid);
     }
     self.clear = () => players.replaceChildren();
+    self.game_select_animation = function(){
+        self.classList.add("hide");
+    }
     return self;
 })();
 
 function requestNewLobby(){
     if(lobby) return console.error(`Currently in lobby ${lobby.id}`);
-    console.log("new lobby");
+    if(isDev) console.debug("new lobby");
     api.send.create_lobby();
 }
 document.getElementById("new-lobby").addEventListener("click", requestNewLobby);
@@ -175,7 +184,7 @@ socket.addEventListener('message', (event) => {
     api.receive(message);
 });
 
-let currentAbort = null;
+/*let currentAbort = null;
 async function gameSelected(gameName){
     if(lobby && gameName == lobby.game?.name) return false;
     if(!GAME_KEYS.has(gameName)) 
@@ -205,7 +214,7 @@ function initGame(game){
     if(!lobby || !lobby.game) return;
     if(game.name != lobby.game.name) return; 
     lobby.game.receiveMessage(game);
-}
+}*/
 
 import { Lobby } from "./shared/lobby.js";
 class ClientLobby extends Lobby{
@@ -215,7 +224,7 @@ class ClientLobby extends Lobby{
 
     constructor(id, players){
         super(id)
-        players?.forEach?.(player => {if(player.id != me.id) this.addClient(new Player(player))});
+        players?.forEach?.(player => this.addClient(player.id == me.id ? me : new Player(player)));
     }
 
     updateClient(clientId, attribute, value){

@@ -16,7 +16,8 @@ export class Game{
     get me(){return this.#me;}
     set me(client){this.#me = client;}
 
-    #start(){
+    _start(){
+        this.show();
         this._active = true;
     }
     static async create(){
@@ -26,13 +27,14 @@ export class Game{
     }
     async _init(){
         const html = await fetch(`./games/${this.name}/game.html`).then(r => r.text());
-        const base = new DOMParser().parseFromString(html, "text/html")
+        const base = new DOMParser().parseFromString(html, "text/html");
+        this._dom.base = base;
         this._dom.headElems = [...base.head.children];
         await Promise.all(this._dom.headElems.map(el => new Promise(resolve => {
             el.onload = resolve;
-            //el.disabled = true;
             document.head.appendChild(el);
         })));
+        this._dom.headElems.forEach(el => el.disabled = true);
         this._dom.container = base.querySelector("#game");
     }
     show(){
@@ -53,5 +55,5 @@ export class ClientHandler extends AbstractClientHandler(BaseHandler){
         super.client = client;
     }
     init_state(ack_code, state){this.api.send.state_set(ack_code, state)}
-    start(){}
+    start(){this.game._start();}
 }
