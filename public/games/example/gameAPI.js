@@ -33,10 +33,8 @@ export class ServerAPI extends API.ServerAPI{
     }
 }
 export const AbstractServerHandler = (Handler) => class extends Handler{
-    /**@returns {ServerAPI} */
-    get api(){return super.api;}
-    /**@returns {import("../../../games/example.game.js").Game} */
-    get game(){return super.game;}
+    /**@type {ServerAPI} */ api;
+    /**@type {import("../../../games/example.game.js").Game} */ game;
 }
 const serverProto = AbstractServerHandler(class{}).prototype;
 export class LobbyAPI extends API.LobbyAPI{
@@ -73,9 +71,7 @@ export class ClientAPI extends API.ClientAPI{
     }
 }
 export const AbstractClientHandler = (Handler) => class extends Handler{
-    /**@returns {ClientAPI} */
-    get api(){return super.api;}
-    /**@returns {import("./game.js").Game}*/
-    get game(){return super.game;}
+    /**@type {ClientAPI} */ api;
+    /**@type {import("./game.js").Game}*/ game;
 }
 const clientProto = AbstractClientHandler(class {}).prototype;
