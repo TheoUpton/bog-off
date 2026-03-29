@@ -1,4 +1,4 @@
-import * as API from "../../base-gameAPI.js";
+import * as API from "../../shared/base-gameAPI.js";
 
 export class ServerAPI extends API.ServerAPI{
     constructor(sender, handler, broadcaster){super(sender, handler, broadcaster);}
