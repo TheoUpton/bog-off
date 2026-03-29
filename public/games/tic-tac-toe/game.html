@@ -1,0 +1,29 @@
+<head>
+    <link rel="stylesheet" href="/games/tic-tac-toe/game.css" class="game">
+</head>
+<body>
+    <section id="game" class="page">
+        <div id="board" class="board">
+            <div class="cell" data-row=0 data-col=0></div>
+            <div class="cell" data-row=0 data-col=1></div>
+            <div class="cell" data-row=0 data-col=2></div>
+            <div class="cell" data-row=1 data-col=0></div>
+            <div class="cell" data-row=1 data-col=1></div>
+            <div class="cell" data-row=1 data-col=2></div>
+            <div class="cell" data-row=2 data-col=0></div>
+            <div class="cell" data-row=2 data-col=1></div>
+            <div class="cell" data-row=2 data-col=2></div>
+        </div>
+    </section>
+    <template id="x-icon">
+        <svg viewBox="0 0 100 100" class="cell-icon" data-value="x">
+            <line x1="20" y1="20" x2="80" y2="80" stroke="black" stroke-width="10" stroke-linecap="round"/>
+            <line x1="80" y1="20" x2="20" y2="80" stroke="black" stroke-width="10" stroke-linecap="round"/>
+        </svg>
+    </template>
+    <template id="o-icon">
+        <svg viewBox="0 0 100 100" class="cell-icon" data-value="o">
+            <circle cx="50" cy="50" r="35" fill="none" stroke="black" stroke-width="10" stroke-linecap="round"/>
+        </svg>
+    </template>
+</body>
