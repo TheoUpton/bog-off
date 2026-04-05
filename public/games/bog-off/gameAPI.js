@@ -20,7 +20,7 @@ export class ServerAPI extends API.ServerAPI{
         }
     }
     get receive(){
-        /**@type {import("../../../games/tic-tac-toe.game.js").ServerHandler} */
+        /**@type {import("../../../games/bog-off.game.js").ServerHandler} */
         const handler = this.handler;
         return (message) => {
             if(super.receive(message) !== false) return true;
@@ -34,7 +34,7 @@ export class ServerAPI extends API.ServerAPI{
 }
 export const AbstractServerHandler = (Handler) => class extends Handler{
     /**@type {ServerAPI} */ api;
-    /**@type {import("../../../games/example.game.js").Game} */ game;
+    /**@type {import("../../../games/bog-off.game.js").Game} */ game;
 }
 const serverProto = AbstractServerHandler(class{}).prototype;
 export class LobbyAPI extends API.LobbyAPI{
@@ -44,7 +44,7 @@ export class LobbyAPI extends API.LobbyAPI{
         const superBroadcast = super.broadcast;
         return {
             ...superBroadcast,
-
+            results: () => broadcaster({type:clientProto.receive_results.name}),
         } 
     }
 }
@@ -73,5 +73,6 @@ export class ClientAPI extends API.ClientAPI{
 export const AbstractClientHandler = (Handler) => class extends Handler{
     /**@type {ClientAPI} */ api;
     /**@type {import("./game.js").Game}*/ game;
+    receive_results(){}
 }
 const clientProto = AbstractClientHandler(class {}).prototype;

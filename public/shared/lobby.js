@@ -16,14 +16,13 @@ export class Lobby {
     /** @returns {UUID} */
     get id(){return this.#id;}
     get size(){return this.#clients.size;}
-    get playerCount(){
-
-    }
     get api(){return this.#api;}
     set _api(api){this.#api = api;}
-    get _randomPlayer(){
-        const players = [...this.#clients.values()].filter(client => client.type === Client.type.player);
-        return players.length <1 ? null : players[Math.floor(Math.random() * players.length)];
+    get players(){
+        return [...this.#clients.values()].filter(client => client.type === Client.type.player);
+    }
+    get randomPlayer(){
+        return this.players.length <1 ? null : this.players[Math.floor(Math.random() * this.players.length)];
     }
     get clients() {
         const clients = this.#clients;

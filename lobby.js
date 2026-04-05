@@ -105,8 +105,8 @@ export class ServerLobby extends Lobby {
     }*/
     /** */
     _setGame(){
-        let player = this._randomPlayer;
-        while(player.game_selected == null) player = this._randomPlayer;
+        let player = this.randomPlayer;
+        while(player.game_selected == null) player = this.randomPlayer;
         const gameClass = player.game_selected;
         this.#setGameInstance(gameClass);
         //this.api.broadcast.game_set(this.game.NAME);
