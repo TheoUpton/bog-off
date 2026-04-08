@@ -2,7 +2,7 @@ import * as API from "./API.js";
 
 export class ServerAPI extends API.ServerAPI{
     /**@param {ServerHandler} handler */
-    constructor(sender, handler, broadcaster, ack_code){super(sender, handler, broadcaster, ack_code);}
+    //constructor(sender, handler, broadcaster, ack_code){super(sender, handler, broadcaster, ack_code);}
     get send(){
         const sender = this.sender;
         const superSend = super.send;

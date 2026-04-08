@@ -3,7 +3,8 @@ export class Game {
     #lobby; #phase = Game.phases.empty; 
     /**@type {Set} */
     #game_set_acks = new Set(); 
-    _initial_state = {global: undefined, client: new Map()}
+    
+    _initial_state = {client: new Map()}//{global: undefined, client: new Map()}
     static phases = Object.freeze({
         empty: new Number(0),
         init: new Number(1),
@@ -70,7 +71,7 @@ import {ServerHandler as BaseServerHandler} from "../public/shared/API.js";
 export class ServerHandler extends AbstractServerHandler(BaseServerHandler){
     #game;
     constructor(game){super(); this.#game = game;}    
-    /**@type  {Game}  */ game;
-    //get game(){return this.#game;}
+    /**@type  {Game}  */
+    get game(){return this.#game;}
     state_set(){this.game._game_loaded_ack(this.client);}
 }

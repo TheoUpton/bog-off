@@ -1,7 +1,6 @@
 import * as API from "../../shared/base-gameAPI.js";
 
 export class ServerAPI extends API.ServerAPI{
-    constructor(sender, handler, broadcaster){super(sender, handler, broadcaster);}
     get send(){
         const sender = this.sender;
         const superSend = super.send;
@@ -34,7 +33,7 @@ export class ServerAPI extends API.ServerAPI{
 }
 export const AbstractServerHandler = (Handler) => class extends Handler{
     /**@type {ServerAPI} */ api;
-    /**@type {import("../../../games/bog-off.game.js").Game} */ game;
+    /**@type {import("../../../games/bog-off.game.js").Game} */ get game(){return super.game};
 }
 const serverProto = AbstractServerHandler(class{}).prototype;
 export class LobbyAPI extends API.LobbyAPI{
@@ -44,7 +43,7 @@ export class LobbyAPI extends API.LobbyAPI{
         const superBroadcast = super.broadcast;
         return {
             ...superBroadcast,
-            results: () => broadcaster({type:clientProto.receive_results.name}),
+            results: (results) => broadcaster({type:clientProto.receive_results.name, results}),
         } 
     }
 }
