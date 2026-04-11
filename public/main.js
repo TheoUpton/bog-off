@@ -82,6 +82,7 @@ class Handler extends ClientHandler{
             lobby.games.set(gameName, game);
         }
         lobby.game = lobby.games.get(gameName);
+        lobby.game.load();
         api.send.game_set_ack(ack_code, gameName);
         
     }
@@ -105,7 +106,7 @@ const api = new API(
     handler
 );
 
-/**@type {import("./shared/lobby.js").Lobby} */
+/**@type {ClientLobby} */
 let lobby;
 const lobbyDOM  =  (() => {
     const self = document.getElementById("lobby");
@@ -215,11 +216,12 @@ function initGame(game){
     if(game.name != lobby.game.name) return; 
     lobby.game.receiveMessage(game);
 }*/
-
+/**@typedef {import("./base-game.js").Game} Game*/
 import { Lobby } from "./shared/lobby.js";
 class ClientLobby extends Lobby{
     /**@type {Game} */
     game;
+    /**@type {Map<string, Game>} */
     games = new Map();
 
     constructor(id, players){

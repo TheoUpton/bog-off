@@ -24,7 +24,7 @@ export class ServerAPI extends API.ServerAPI{
         return (message) => {
             if(super.receive(message) !== false) return true;
             switch(message.type){
-                case handler.receive_turn.name: handler.receive_turn(message.move.row, message.move.col); break;
+                case handler.receive_answers.name: handler.receive_answers(message.answers); break;
                 default: return false
             }
             return true;
@@ -34,6 +34,7 @@ export class ServerAPI extends API.ServerAPI{
 export const AbstractServerHandler = (Handler) => class extends Handler{
     /**@type {ServerAPI} */ api;
     /**@type {import("../../../games/bog-off.game.js").Game} */ get game(){return super.game};
+    receive_answers(answers){}
 }
 const serverProto = AbstractServerHandler(class{}).prototype;
 export class LobbyAPI extends API.LobbyAPI{
@@ -54,7 +55,7 @@ export class ClientAPI extends API.ClientAPI{
         const superSend = super.send;
         return {
             ...superSend,
-            
+            answers: (answers) => sender({type: serverProto.receive_answers.name, answers}),
         };
     }
     get receive(){
@@ -63,6 +64,7 @@ export class ClientAPI extends API.ClientAPI{
         return (message) => {
             if(super.receive(message) !== false) return true;
             switch(message.type){
+                case handler.receive_results.name: handler.receive_results(message.results); break;
                 default: return false;
             }
             return true;
@@ -72,6 +74,6 @@ export class ClientAPI extends API.ClientAPI{
 export const AbstractClientHandler = (Handler) => class extends Handler{
     /**@type {ClientAPI} */ api;
     /**@type {import("./game.js").Game}*/ game;
-    receive_results(){}
+    receive_results(results){}
 }
 const clientProto = AbstractClientHandler(class {}).prototype;

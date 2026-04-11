@@ -229,8 +229,8 @@ export class Game extends BaseGame{
     /**@param {Client} client @param {string[]} answers @returns */
     receive_answers(client, answers){
         const validated = this.#validate_client_answers(answers);
-        this.#validated_player_answers.add(client, validated);
-        if(this.#validated_player_answers.size !== this.lobby.players.size) return;
+        this.#validated_player_answers.set(client, validated);
+        if(this.#validated_player_answers.size !== this.lobby.players.length) return;
         this.#calculate_word_scores();
         this.#broadcast_results();
     }

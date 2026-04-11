@@ -17,7 +17,7 @@ export class Game{
     set me(client){this.#me = client;}
 
     _start(){
-        this.show();
+        //this.show();
         this._active = true;
     }
     static async create(){
@@ -37,11 +37,11 @@ export class Game{
         this._dom.headElems.forEach(el => el.disabled = true);
         this._dom.container = base.querySelector("#game");
     }
-    show(){
+    load(){
         this._dom.headElems.forEach(elem => elem.disabled = false);
         Game.#empty_container.replaceWith(this._dom.container);
     }
-    hide(){
+    unload(){
         this._dom.container.replaceWith(Game.#empty_container);
         this._dom.headElems.forEach(elem => elem.disabled = true);
     }
