@@ -46,3 +46,11 @@ export function selectGame(player, message){
 }*/
 
 export function gameKeys(){ return Object.keys(GAMES);}
+
+export const gameAPIs = new Map();
+for (const key of gameKeys()){
+    const {ServerAPI , LobbyAPI, receiverKey} = await import(`../public/games/${key}/gameAPI.js`);
+    const {ServerHandler} = await import(`./${key}.game.js`);
+    gameAPIs.set(key, {ServerAPI, LobbyAPI, ServerHandler, receiverKey});
+};
+Object.freeze(gameAPIs);
