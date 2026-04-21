@@ -199,36 +199,3 @@ export class ServerLobby extends Lobby {
         return clientProxy;
     }
 }
-import { Client } from "./public/shared/lobby.js";
-export class ServersideClient extends Client{    
-    constructor({privateId, id, name, game_selected = null, type}){
-        super({privateId, id, name, type});
-        this.ready = false;
-        this.name = name;
-        this._game_selected = game_selected
-    }
-
-    get game_selected(){return this._game_selected;}
-    get isConnected(){return !(this.api == null)}
-    /** @returns {JSON} JSON of the player suitable for sending to other players*/
-    toJSON(){
-        //prepend attribute keys before ...publicAttrs to exclude the attribute
-        const {...publicAttrs} = this;
-        return {id: this.id, type: this.type, ...publicAttrs};
-    }
-    /**Extracts parameters from a URL to create an object for Player instantiation
-     * @param {URL} url 
-     * @returns 
-     */
-    static paramsFromURL(url){
-        let type = url.searchParams.get("type");
-        if(type) type = Client.type[type];
-        else type = Client.type.player;
-        return {
-            name: url.searchParams.get('name'),
-            privateId: url.searchParams.get('privateId'),
-            id: url.searchParams.get('id'),
-            type:  type,
-        }
-    }
-}
