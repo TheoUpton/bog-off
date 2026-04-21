@@ -1,9 +1,8 @@
-import {Client} from "../public/shared/lobby.js"
 export class Game {
     #lobby; #phase = Game.phases.empty; 
     /**@type {Set} */
     #game_set_acks = new Set(); 
-    _initial_state = {global: undefined, client: new Map()}
+    _initial_state = {global: undefined, user: new Map()}
     static phases = Object.freeze({
         empty: new Number(0),
         init: new Number(1),
@@ -29,25 +28,25 @@ export class Game {
     }
     reset(){
         this._initial_state.global = undefined;
-        this._initial_state.client.clear();
+        this._initial_state.user.clear();
     }
     game_init(){
         this.#phase = Game.phases.init;
-        for(const client in [...this.#game_set_acks.values()])
-            this.#send_initial_state(client)
+        for(const user in [...this.#game_set_acks.values()])
+            this.#send_initial_state(user)
     }
-    game_set_ack(client){
-        this.#game_set_acks.add(client);
+    game_set_ack(user){
+        this.#game_set_acks.add(user);
         if(this.phase === Game.phases.init) 
-            this.#send_initial_state(client);
+            this.#send_initial_state(user);
     }
-    #send_initial_state(client){
-        client.api?.send.init_state(this._initial_state.global, this._initial_state.client.get(client));
+    #send_initial_state(user){
+        user.api?.send.init_state(this._initial_state.global, this._initial_state.user.get(user));
     }
     /**@type {Set} */
     #game_loaded_acks = new Set();
-    _game_loaded_ack(client){
-        this.#game_loaded_acks.add(client);
+    _game_loaded_ack(user){
+        this.#game_loaded_acks.add(user);
         if(this.#game_loaded_acks.size < this.lobby.size - this.lobby.dcCount) return;
         this.#send_start();
     }
@@ -56,21 +55,18 @@ export class Game {
         this.#game_loaded_acks.clear();
         this.lobby.api.broadcast.start();
     }
-    /**@param {Omit<import("../lobby.js").ServersideClient, "api"> & {api: import("../public/shared/base-gameAPI.js").ServerAPI}} client  */
-    client_reconnected(client){
-        if(client.type !== Client.type.player){} 
+    /**@param {Omit<import("../user.js").User, "api"> & {api: import("../public/shared/base-gameAPI.js").ServerAPI}} user  */
+    user_reconnected(user){
+        if(!user.isPlayer){} 
         switch(this.phase){
-            case Game.phases.init: return client.api.send.init_state(this._initial_state);
+            case Game.phases.init: return user.api.send.init_state(this._initial_state);
         }
     }
     _gameOver(){}
 }
 import {AbstractServerHandler} from "../public/shared/base-gameAPI.js";
-import {ServerHandler as BaseServerHandler} from "../public/shared/API.js";
-export class ServerHandler extends AbstractServerHandler(BaseServerHandler){
-    #game;
-    constructor(game){super(); this.#game = game;}    
-    /**@type  {Game}  */ game;
-    //get game(){return this.#game;}
-    state_set(){this.game._game_loaded_ack(this.client);}
+import {Handler} from "../public/shared/API.js";
+export class ServerHandler extends AbstractServerHandler(Handler){
+    /**@type {Game} */ get game(){return super.target;}
+    state_set(){this.game._game_loaded_ack(this.user);}
 }

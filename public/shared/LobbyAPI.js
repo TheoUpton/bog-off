@@ -7,12 +7,12 @@ export class LobbyAPI extends API.LobbyAPI{
     #broadcast = {
         ...super.broadcast,
         game_set: (gameName) => this._broadcaster({type: ClientHandler.prototype.game_set.name, gameName, ...this.generateAck()}),
-        client_joined: (client) => this._broadcaster({type:ClientHandler.prototype.client_joined.name, client: client}, client),
-        client_left: (client) => this._broadcaster({type:ClientHandler.prototype.client_left.name, id: client.id}, client),
-        cllient_reconnected: (client) => this._broadcaster({type: ClientHandler.prototype.client_reconnected.name, client}, client),
-        update_id: (oldId, newId, client) => this._broadcaster({type: ClientHandler.prototype.update_id.name, oldId, newId}, client),
-        /**@param {Client} client @param {string} attribute*/
-        client_update: (client, attribute, value = client[attribute]) => this._broadcaster({type:ClientHandler.prototype.update_client.name, id: client.id, attribute, value:value}, client),
+        user_joined: (user) => this._broadcaster({type:ClientHandler.prototype.user_joined.name, user}, user),
+        user_left: (user) => this._broadcaster({type:ClientHandler.prototype.user_left.name, id: user.id}, user),
+        cllient_reconnected: (user) => this._broadcaster({type: ClientHandler.prototype.user_reconnected.name, user}, user),
+        update_id: (oldId, newId, user) => this._broadcaster({type: ClientHandler.prototype.update_id.name, oldId, newId}, user),
+        /**@param {User} user @param {string} attribute*/
+        user_update: (user, attribute, value = user[attribute]) => this._broadcaster({type:ClientHandler.prototype.update_user.name, id: user.id, attribute, value:value}, user),
     };
 }
 
@@ -21,7 +21,7 @@ export class ServerHandler extends API.Handler{
     /**@type {ServerAPI} */ get api(){super.api;}
     /**@type {} */ get lobby(){super.target;}
     leave_lobby(){}
-    client_update({attribute, value}){}
+    user_update({attribute, value}){}
     game_set_ack({gameName}){}
 }
 
@@ -30,7 +30,7 @@ export class ClientAPI extends API.ClientAPI{
     #send = {
         ...super.send,
         leave_lobby: () => this._sender({type:ServerHandler.prototype.leave_lobby.name}),
-        client_update: ({attribute, value}) => this._sender({type: ServerHandler.prototype.client_update.name, attribute, value}),
+        user_update: ({attribute, value}) => this._sender({type: ServerHandler.prototype.user_update.name, attribute, value}),
         game_set_ack: (ack_code, gameName) => this._sender({type:ServerHandler.prototype.game_set_ack.name, ack_code, gameName}),
     };
     receive(message){
@@ -40,10 +40,10 @@ export class ClientAPI extends API.ClientAPI{
 }
 export class ClientHandler extends API.Handler{
     /**@type {ClientAPI} */ get api(){super.api;}
-    client_joined(){}
-    client_left({id}){}
-    client_reconnected({client}){}
-    update_client({attribute, value}){}
+    user_joined(){}
+    user_left({id}){}
+    user_reconnected({user}){}
+    update_user({attribute, value}){}
     update_id({oldId, newId}){}
     game_set({ack_code, gameName}){this.api.send.game_set_ack(ack_code, gameName)}
 }

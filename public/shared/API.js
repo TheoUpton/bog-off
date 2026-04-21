@@ -16,7 +16,7 @@ class BaseAPI{
 export const Broadcastable = (Base = BaseAPI) => class extends Base {
     /**
      * @param {Object} options
-     * @param {function(*, ...import("./client").Client) : void} options.broadcaster 
+     * @param {function(*, ...import("./user").User) : void} options.broadcaster 
      */
     constructor({broadcaster, ...rest}){
         super(rest);
@@ -92,18 +92,18 @@ export class LobbyAPI extends Broadcastable(){}
 export class ServerAPI extends Sendable(Receivable()){}
 export class ClientAPI extends Sendable(Receivable()){}
 export class Handler{
-    #client;
+    #user;
     #target; 
     /**@type {IReceivable | undefined} */
     #api;
-    /** @param {import("./client").Client} client @param {any} target */
-    constructor(client, target){
-        this.#client = client;
+    /** @param {import("./user").User} user @param {any} target */
+    constructor(user, target){
+        this.#user = user;
         this.#target = target;
     }
     get api(){return this.#api;}
     /**@param {IReceivable} api*/
     set _api(api){this.#api = api;}
     get target(){return this.#target;}
-    get client(){return this.#client;}
+    get user(){return this.#user;}
 }

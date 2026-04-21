@@ -1,18 +1,10 @@
 //const fs = require('fs')
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, join} from 'path';
 import fs from 'fs';
 
 /**@type {Object.<string, import('./game').Game>}*/
 export const GAMES = {}
-
-/**fs.readdirSync(__dirname)
-    .filter(file => file.endsWith('.game.js') && file !== 'example.game.js')
-    .forEach(file => {
-        const GameClass = import (`./${file}`)
-        GAMES[GameClass.gameName] = GameClass
-    })
-;*/
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,23 +19,9 @@ await Promise.all(files.map(async file => {
 }));
 Object.freeze(GAMES);
 
-/*
- * @param {import('../lobby').Player} player 
- * @param {import('ws').RawData} message 
- * @returns 
- 
-export function selectGame(player, message){
-    if(message.type != "game_select"){
-        console.error(`Unknown game type: ${message.type}`);
-        return false;
-    }
-    if(!(message.game in GAMES)){
-        console.error(`Unknown game ${message.game}`);
-        return false;
-    }
-    player.gameSelected = GAMES[message.game];
-    return true;
-}*/
+fs.writeFileSync(join(__dirname, "..",'public', 'game-keys.js'),
+  `export const GAME_KEYS = Object.freeze(${JSON.stringify(Object.keys(GAMES))});`
+);
 
 export function gameKeys(){ return Object.keys(GAMES);}
 

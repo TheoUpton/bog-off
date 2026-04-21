@@ -12,8 +12,8 @@ export class Game extends BaseGame{
     static get minPlayers(){return 2};
     static get maxPlayers(){return 2};
     static get gameName(){return gameName};
-    /**@returns {Omit<import('../lobby').ServerLobby, "api"> & {api:import("../public/games/tic-tac-toe/gameAPI.js").LobbyAPI}} */
-    lobby;//get lobby(){return super.lobby;}
+    /**@type {Omit<import('../lobby.js').ServerLobby, "api"> & {api:import("../public/games/tic-tac-toe/gameAPI.js").LobbyAPI}} */
+    get lobby(){return super.lobby;}
     #turnOrder; #turn = 0; #board = [[null, null, null],[null, null, null],[null, null, null]]
     game_init(){
         this.#generate_turn_order();
@@ -21,14 +21,14 @@ export class Game extends BaseGame{
         super.game_init();
     }
     #generate_turn_order(){
-        const players = [...this.lobby.clients.values()].filter(client => client.isPlayer);
+        const players = [...this.lobby.users.values()].filter(user => user.isPlayer);
         const probability = isDev ? 1 : 0.5;
         this.#turnOrder = Math.random() <= probability ? players : [players[1], players[0]] ;
     }
-    receive_turn(client, row, col){
+    receive_turn(user, row, col){
         if(!this.phase === Game.phases.active) return;
-        if(!this.#validate_turn(client, row, col)) return;
-        this.#board[row][col] = client;
+        if(!this.#validate_turn(user, row, col)) return;
+        this.#board[row][col] = user;
         const result = this.#isGameOver(row, col);
         if(result === false) {
             this.lobby.api.broadcast.update_state(this.#turnOrder[this.#turn %2].id, row, col, this.#turnOrder[(this.#turn+1) %2].id)
@@ -37,11 +37,11 @@ export class Game extends BaseGame{
         }
         this.lobby.api.broadcast.update_state(this.#turnOrder[this.#turn %2].id, row, col, null)
         if(result === null) this.lobby.api.broadcast.result_tie();
-        else this.lobby.api.broadcast.result_win(client, result);
+        else this.lobby.api.broadcast.result_win(user, result);
         this._gameOver();
     }
-    #validate_turn(client, row, col){
-        if(client !== this.#turnOrder[this.#turn %2]) return false;
+    #validate_turn(user, row, col){
+        if(user !== this.#turnOrder[this.#turn %2]) return false;
         if(this.#board[row][col] !== null) return false;
         return true;
     }
@@ -61,8 +61,6 @@ export class Game extends BaseGame{
 //const {ServerHandler: Handler} = await import(`../public/games/${gameName}/gameAPI.js`);
 
 export class ServerHandler extends AbstractHandler(BaseHandler){
-    constructor(game){super(game);}
-    /**@type {Game} */ game;
-    //get game(){return super.game;}
-    receive_turn(row, col){this.game.receive_turn(this.client, row, col)}
+    /**@type {Game} */ get game(){return super.game;};
+    receive_turn(row, col){this.game.receive_turn(this.user, row, col)}
 }

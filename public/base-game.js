@@ -1,4 +1,4 @@
-export {ClientAPI as GameAPI} from "./shared/base-gameAPI.js";
+export {ClientAPI} from "./shared/base-gameAPI.js";
 
 export class Game{
     //must match folder name
@@ -47,7 +47,7 @@ export class Game{
     }
 }
 import {AbstractClientHandler} from "./shared/base-gameAPI.js";
-import {ClientHandler as BaseHandler} from "./shared/API.js";
+import {Handler as BaseHandler} from "./shared/API.js";
 export class ClientHandler extends AbstractClientHandler(BaseHandler){
     get client(){return super.client;}
     set client(client){

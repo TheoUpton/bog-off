@@ -7,7 +7,7 @@ export class LobbyAPI extends API.LobbyAPI{
     #broadcast = {
         update_state: (currentPlayer, row, col, nextPlayer) => this._broadcaster({type: clientProto.update_state.name, currentPlayer, move:{row, col}, nextPlayer}),
         result_tie: () => this._broadcaster({type: clientProto.result_tie.name}),
-        result_win: (client, result) => this._broadcaster({type: clientProto.result_win.name, winner: client, result}),
+        result_win: (user, result) => this._broadcaster({type: clientProto.result_win.name, winner: user, result}),
     };
 } 
 
@@ -36,6 +36,6 @@ export const AbstractClientHandler = (Handler) => class extends Handler{
     /**@type {import("./game.js").Game} */ get game(){super.target;}
     update_state({currentPlayer, move:{row, col}, nextPlayer}){}
     result_tie(){}
-    result_win({client, result}){}
+    result_win({user, result}){}
 }
 const clientProto = AbstractClientHandler(class{}).prototype;

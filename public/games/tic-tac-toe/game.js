@@ -1,5 +1,5 @@
 import {Game as BaseGame, ClientHandler as BaseHandler} from "../../base-game.js";
-export {ClientAPI as GameAPI} from "./gameAPI.js";
+export {ClientAPI, receiverKey} from "./gameAPI.js";
 
 export class Game extends BaseGame{
     static get name(){return "tic-tac-toe"};
