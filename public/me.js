@@ -1,5 +1,6 @@
-import { ClientLobby } from "./lobby.js";
+import { MainLobby } from "./lobby.js";
 import { User } from "./shared/user.js";
+import { Handler } from "./shared/API.js";
 
 const isDev = window.location.hostname === 'localhost';
 
@@ -29,7 +30,7 @@ export class UserHandler extends Handler{
         }
     }
     join_lobby({lobby:{id, clients}}){
-        const lobby = new ClientLobby(me, id, clients);
+        const lobby = new MainLobby(me, id, clients);
         me.onJoinLobby();
         history.pushState({},'',`/?&lobbyId=${lobby.id}`);
     }
