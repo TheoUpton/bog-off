@@ -5,12 +5,22 @@ export class User {
     static #staticType = {player: User.#player, spectator: User.#spectator};
     static get type(){return User.#staticType;}
 
-    /**@param {{privateId: UUID, id: UUID, name: string}} client  */
+    /**@param {{privateId: UUID, id: UUID, name: string}} user  */
     constructor({privateId, id, name, type}){
         console.log("creating player:\n  privateId:", privateId,"\n  id:", id,"\n  name:", name)
-        this.#privateId = privateId;
+        if(privateId instanceof Promise){
+            privateId.then(id => {
+                if (this.#privateId != null) return;
+                this.#privateId = id;
+            });
+        } else this.#privateId = privateId;
         this.name = name;
-        this.#id = id;
+        if(id instanceof Promise){
+            id.then(newid => {
+                if(this.#id != null) return;
+                this.#id = newid;
+            });
+        } else this.#id = id;
         this.#type = type;
         this._connected = true;
     }
