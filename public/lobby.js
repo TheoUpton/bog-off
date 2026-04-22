@@ -39,20 +39,6 @@ const lobbyDOM  =  (() => {
     return self;
 })();
 
-function requestNewLobby(){
-    if(lobby) return console.error(`Currently in lobby ${lobby.id}`);
-    if(isDev) console.debug("new lobby");
-    api.send.create_lobby();
-}
-document.getElementById("new-lobby").addEventListener("click", requestNewLobby);
-
-function requestJoinLobby(){
-    if(lobby) return console.error(`Currently in lobby ${lobby.id}`);
-    const lobbyID = document.getElementById("input-lobby-id").value;
-    api.send.join_lobby(lobbyID);
-}
-document.getElementById("submit-lobby").addEventListener("click", requestJoinLobby);
-
 function requestLeaveLobby(){
     api.send.leave_lobby();
     lobby = null;
@@ -66,7 +52,7 @@ document.getElementById("leave-lobby").addEventListener("click", requestLeaveLob
 document.getElementById("client-ready").addEventListener("change", (event) => {api.send.client_update({attribute: "ready", value: event.target.checked})})
 
 import { Lobby } from "./shared/lobby.js";
-class ClientLobby extends Lobby{
+export class ClientLobby extends Lobby{
     /**@type {Game} */
     game;
     games = new Map();
@@ -90,20 +76,6 @@ class ClientLobby extends Lobby{
 }
 
 export class Handler extends ClientHandler{
-    client_init(client){
-        for (var key in client) me.update(key, client[key]); 
-        if(me._privateId) localStorage.setItem("privateId", me._privateId);
-        if(me.id) localStorage.setItem("id", me.id);
-    }
-    join_lobby(lobbyId, clients){
-        lobby = new ClientLobby(lobbyId, clients);
-        lobby.forEach(client => lobbyDOM.addPlayer(client));
-        lobby.addListener(lobby.addClient, lobbyDOM.addPlayer);
-        lobby.addListener(lobby.removeClient, lobbyDOM.removePlayer);
-        allPages.hideAll();
-        lobbyDOM.classList.remove("hide");
-        history.pushState({},'',`/?&lobbyId=${lobby.id}`);
-    }
     player_joined(client){lobby.addClient(new Player(client))}
     client_left(id){lobby.removeClient({id})}
     update_client({id, attribute, value}){lobby.updateClient(id, attribute, value)}
@@ -146,8 +118,5 @@ export class Handler extends ClientHandler{
     unknown_error_code(error){
         
     }
-    lobby_404(message){
-        history.pushState({},'','');
-        console.warn(message)
-    }
+
 }
