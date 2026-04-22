@@ -1,26 +1,10 @@
 const isDev = window.location.hostname === 'localhost';
 import {MainClientAPI as API, ClientHandler} from "./shared/MainAPI.js";
 import {generateWrapper} from "./shared/API.js";
-
-export class Player{
-    onUpdate = {};
-    constructor(json){for (const key in json) this[key]=json[key];}
-    get proxy(){return this;}
-    update(attribute, value){
-        this[attribute] = value;
-        this.onUpdate[attribute]?.(value);
-    }
-}
-const me = new Player();
-
-me.privateId = localStorage.getItem("privateId");
-me.id = localStorage.getItem("id");
-me.name = localStorage.getItem("name")
-if(me.name) document.getElementById("player-name").value = me.name;
-if(isDev) console.log(me);
+import { me } from "./me.js";
 
 let customQuery = window.location.search == "" ? "?" :"";
-customQuery += me.privateId ? `&privateId=${me.privateId}` : "";
+customQuery += me._privateId ? `&privateId=${me._privateId}` : "";
 customQuery += me.id ? `&id=${me.id}` : "";
 customQuery += me.name ? `&name=${me.name}` : "";
 
@@ -36,7 +20,7 @@ let GAME_KEYS;
 class Handler extends ClientHandler{
     client_init(client){
         for (var key in client) me.update(key, client[key]); 
-        if(me.privateId) localStorage.setItem("privateId", me.privateId);
+        if(me._privateId) localStorage.setItem("privateId", me._privateId);
         if(me.id) localStorage.setItem("id", me.id);
     }
     join_lobby(lobbyId, clients){
@@ -166,15 +150,6 @@ function requestLeaveLobby(){
     homeDOM.classList.remove("hide");
 }
 document.getElementById("leave-lobby").addEventListener("click", requestLeaveLobby);
-
-function updateMeName(value){
-    if(value == me.name) return;
-    me.name = value;
-    api.send.client_update({attribute: "name", value});
-    localStorage.setItem("name", value)
-}
-document.getElementById("player-name").addEventListener("blur", (event) => updateMeName(event.target.value));
-document.getElementById("player-name").addEventListener("keydown", (event) => {if(event.key === 'Enter') event.target.blur()});
 
 document.getElementById("client-ready").addEventListener("change", (event) => {api.send.client_update({attribute: "ready", value: event.target.checked})})
 
