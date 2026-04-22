@@ -22,7 +22,7 @@ export class User extends BaseUser{
         }
         super(userParams);
         const sender = User.#generateSender(socket);
-        const handler = new Handler(this);
+        const handler = new _Handler(this);
         const api = new API({sender, handler});
         api.send.user_init(userParams);
         this._api = api;
@@ -56,7 +56,7 @@ export class User extends BaseUser{
         }
     }
 }
-class Handler extends ServerHandler{
+export class _Handler extends ServerHandler{
     /**@type {import("./lobby.js").MainLobby} */ lobby;
     /**@type {User} */ get user(){return super.user;}
 
