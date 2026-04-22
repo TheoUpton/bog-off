@@ -6,25 +6,31 @@ import { User } from "./user.js";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
-app.use(express.static('public'));
+export function createServer(){
+    const app = express();
+    const server = http.createServer(app);
+    const wss = new WebSocketServer({ server });
+    app.use(express.static('public'));
 
-wss.on('connection', (socket, request) => {
-    if(isDev) console.log('a player connected');
+    wss.on('connection', (socket, request) => {
+        if(isDev) console.log('a player connected');
 
-    const user = new User(socket, request);
+        const user = new User(socket, request);
 
-    socket.on('message', (data) => {
-        const message = data.toString();
-        if(isDev) console.debug(`incoming message: ${message}`);
-        user.api.receive(JSON.parse(message));
-    })
+        socket.on('message', (data) => {
+            const message = data.toString();
+            if(isDev) console.debug(`incoming message: ${message}`);
+            user.api.receive(JSON.parse(message));
+        })
 
-    socket.on('close', () => user.connection_closed());
-});
+        socket.on('close', () => user.connection_closed());
+    });
 
-server.listen(3000, () => {
-    console.log('Server running on http://localhost:3000')
-});
+    return server;
+}
+if(process.argv[1] === new URL(import.meta.url).pathname){
+    createServer().listen(3000, () => {
+        console.log('Server running on http://localhost:3000')
+    });
+}
+
