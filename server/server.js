@@ -28,7 +28,7 @@ export function createServer(){
 
     return server;
 }
-if(process.argv[1] === new URL(import.meta.url).pathname){
+if(process.env.NODE_ENV !== "test"){
     createServer().listen(3000, () => {
         console.log('Server running on http://localhost:3000')
     });
