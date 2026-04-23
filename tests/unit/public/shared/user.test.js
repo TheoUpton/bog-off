@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { User } from "../../../../public/shared/user.js";
+import { User } from "@shared/user.js";
 
 describe("User creation", () => {
     let user;
@@ -27,7 +27,8 @@ describe("User creation", () => {
 });
 
 describe("User proxy", () => {
-    let user, proxy;
+    /**@type {User} */ let user;
+    /**@type {User} */ let proxy;
 
     beforeEach(() => {
         user = new User({

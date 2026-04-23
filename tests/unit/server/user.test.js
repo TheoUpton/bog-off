@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { _Handler } from "../../../server/user.js";
-import { Lobbies } from '../../../server/lobby.js';
-import { ServerAPI, ClientHandler } from '../../../public/shared/userAPI.js';
-import { LobbyAPI } from '../../../public/shared/LobbyAPI.js';
-import { ClientHandler as LobbyClientHandler } from '../../../public/shared/LobbyAPI.js';
+import { _Handler } from "@server/user.js";
+import { Lobbies } from '@server/lobby.js';
+import { ServerAPI, ClientHandler } from '@shared/userAPI.js';
+import { LobbyAPI } from '@shared/LobbyAPI.js';
+import { ClientHandler as LobbyClientHandler } from '@shared/LobbyAPI.js';
 
 const createMockSender = () => {
     const sent = [];

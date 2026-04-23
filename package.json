@@ -4,8 +4,8 @@
   "description": "",
   "main": "server/server.js",
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --config vitest.config.js",
+    "test:watch": "vitest --config vitest.config.js",
     "start": "cross-env NODE_ENV=production node server/server.js",
     "dev": "nodemon --watch server --watch public/shared server/server.js"
   },
