@@ -1,7 +1,6 @@
-//const fs = require('fs')
 import { fileURLToPath } from 'url';
 import { dirname, join} from 'path';
-import fs from 'fs';
+import {readdirSync, writeFileSync, readFileSync} from 'fs';
 
 /**@type {Object.<string, import('./game').Game>}*/
 export const GAMES = {}
@@ -9,7 +8,7 @@ export const GAMES = {}
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const files = fs.readdirSync(__dirname)
+const files = readdirSync(__dirname)
     .filter(file => file.endsWith('.game.js') && file !== 'example.game.js');
 
 await Promise.all(files.map(async file => {
@@ -19,9 +18,15 @@ await Promise.all(files.map(async file => {
 }));
 Object.freeze(GAMES);
 
-fs.writeFileSync(join(__dirname, "..",'public', 'game-keys.js'),
-  `export const GAME_KEYS = Object.freeze(${JSON.stringify(Object.keys(GAMES))});`
-);
+const gameKeysPath = join(__dirname, "../public/game-keys.js");
+const newContent = `export const GAME_KEYS = Object.freeze(${JSON.stringify(Object.keys(GAMES))});`;
+let existingContent;
+try {
+    existingContent = readFileSync(filePath, 'utf8');
+} catch {
+    existingContent = null;
+}
+if(existingContent !== newContent) writeFileSync(gameKeysPath, newContent);
 
 export function gameKeys(){ return Object.keys(GAMES);}
 
