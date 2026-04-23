@@ -126,7 +126,7 @@ export class _LobbyHandler extends ServerHandler{
     /**@type {import("../public/shared/user.js").User} */ get user(){return super.user;}
 
     leave_lobby(){
-        this.lobby.api.broadcast.user_left();
+        this.lobby.api.broadcast.user_left(this.user);
         this.lobby.removeUser(this.user);
         if(this.lobby.isEmpty()) Lobbies.delete(this.lobby.id);
         if(this.lobby.isReady() && !this.lobby.isEmpty()) startGame(this.lobby);
