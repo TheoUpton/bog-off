@@ -1,5 +1,5 @@
 import {Game as BaseGame, ServerHandler as BaseHandler} from "./game.js";
-import {AbstractServerHandler as AbstractHandler} from "../public/games/tic-tac-toe/gameAPI.js";
+import {AbstractServerHandler as AbstractHandler} from "../../public/games/tic-tac-toe/gameAPI.js";
 
 import { fileURLToPath } from 'url';
 import { basename } from 'path';

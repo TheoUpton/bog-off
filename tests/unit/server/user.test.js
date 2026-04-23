@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { _Handler } from "../../user.js";
-import { Lobbies } from '../../lobby.js';
-import { ServerAPI, ClientHandler } from '../../public/shared/userAPI.js';
-import { LobbyAPI } from '../../public/shared/LobbyAPI.js';
-import { ClientHandler as LobbyClientHandler } from '../../public/shared/LobbyAPI.js';
+import { _Handler } from "../../../server/user.js";
+import { Lobbies } from '../../../server/lobby.js';
+import { ServerAPI, ClientHandler } from '../../../public/shared/userAPI.js';
+import { LobbyAPI } from '../../../public/shared/LobbyAPI.js';
+import { ClientHandler as LobbyClientHandler } from '../../../public/shared/LobbyAPI.js';
 
 const createMockSender = () => {
     const sent = [];
@@ -61,7 +61,7 @@ describe("User Handler", () => {
     it("fresh users join lobby normally", () => {
         const broadcaster = createMockBroadcaster();
         const lobbyAPI = new LobbyAPI({broadcaster});
-        /**@type {import("../../public/shared/lobby.js").Lobby} */
+        /**@type {import("../../../public/shared/lobby.js").Lobby} */
         const lobby = {
             api: lobbyAPI,
             addUser: vi.fn(user => user),
@@ -81,7 +81,7 @@ describe("User Handler", () => {
     it("reconnected users join lobby via reconnect method", () => {
         const broadcaster = createMockBroadcaster();
         const lobbyAPI = new LobbyAPI({broadcaster});
-        /**@type {import("../../public/shared/lobby.js").Lobby} */
+        /**@type {import("../../../public/shared/lobby.js").Lobby} */
         const lobby = {
             api: lobbyAPI,
             reconnectUser: vi.fn(user => user),

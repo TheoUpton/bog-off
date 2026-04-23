@@ -1,8 +1,8 @@
 import {randomUUID} from "crypto";
 
-import {Lobby} from "./public/shared/lobby.js";
-import { ServerHandler, ServerAPI, receiverKey, LobbyAPI } from "./public/shared/LobbyAPI.js";
-import { default as config} from "./devconfig.js";
+import {Lobby} from "../public/shared/lobby.js";
+import { ServerHandler, ServerAPI, receiverKey, LobbyAPI } from "../public/shared/LobbyAPI.js";
+import { default as config} from "../devconfig.js";
 import { GAMES, gameAPIs } from "./games/gameRegistry.js";
 
 
@@ -18,7 +18,7 @@ export class ServerLobby extends Lobby {
         })
     };
     isReady(){return [...this.players.values()].every(player => player.ready)}
-    /**@typedef {Omit<import("./public/shared/API.js"), "Handler"> & {ServerHandler: typeof import("./public/shared/API.js").Handler} & {target: *}} API */
+    /**@typedef {Omit<import("../public/shared/API.js"), "Handler"> & {ServerHandler: typeof import("../public/shared/API.js").Handler} & {target: *}} API */
     /**@type {API}*/
     #userAPI;
     /**@param {Object} param0 @param {API} param0.API @param {typeof ServerLobby} param0.LobbyClass*/
@@ -31,7 +31,7 @@ export class ServerLobby extends Lobby {
         copy.#api = lobbyAPI;
         return copy;
     }
-    /**@param {import("./public/shared/user.js").User} user  */
+    /**@param {import("../public/shared/user.js").User} user  */
     _generateUserProxy(user){
         const proxy = user.proxy;
         const {ServerAPI, ServerHandler, receiverKey, target, ack_code} = this.#userAPI;
@@ -46,13 +46,13 @@ export class ServerLobby extends Lobby {
 }
 export class MainLobby extends ServerLobby{
     #id;
-    /**@type {import("./public/shared/LobbyAPI.js").LobbyAPI} */
+    /**@type {import("../public/shared/LobbyAPI.js").LobbyAPI} */
     constructor(id){
         super();
         this.#id = id;
     }
     get id(){return this.#id;}
-    /**@type {import("./public/shared/LobbyAPI.js").LobbyAPI} */
+    /**@type {import("../public/shared/LobbyAPI.js").LobbyAPI} */
     get api(){return super.api;}
     addUser(user){
         const proxy = super.addUser(user);
@@ -72,7 +72,7 @@ export class MainLobby extends ServerLobby{
         super.disconnectedUser(user);
     }
     #game;
-    /** @type {import('./games/game.js').Game} */
+    /** @type {import('../games/game.js').Game} */
     get game(){return this.#game;}
 
     /** returns true if there no active players in the lobby */
@@ -89,23 +89,23 @@ export class MainLobby extends ServerLobby{
         this.#setGameInstance(gameClass);
         //this.api.broadcast.game_set(this.game.NAME);
     }
-    /**@type {Map<(typeof import("./games/game.js").Game), import("./games/game.js").Game>} */
+    /**@type {Map<(typeof import("../games/game.js").Game), import("../games/game.js").Game>} */
     #gameInstances = new Map();
     game_set_ack(user, gameName){
         if(gameName != this.game.NAME) return console.error(`Ack mismatch received`);
         //this.#informListener(this.game_set_ack.name, user)
     }
-    /** @param {typeof import("./games/game.js").Game} gameClass */
+    /** @param {typeof import("../games/game.js").Game} gameClass */
     #setGameInstance(gameClass){
         //this.#game_set_acks = new set();
         this.api.broadcast.game_set(gameClass.gameName);
         this.#game = this.#gameInstances.get(gameClass) ?? this.#instantiateGame(gameClass);
         this.game.game_init();
     }
-    /** @param {typeof import("./games/game.js").Game} gameClass */
+    /** @param {typeof import("../games/game.js").Game} gameClass */
     #instantiateGame(gameClass){
         const game = new gameClass();        
-        /** @type {import("./public/shared/base-gameAPI.js") & {ServerHandler: typeof import("./games/game.js").ServerHandler}}*/
+        /** @type {import("../public/shared/base-gameAPI.js") & {ServerHandler: typeof import("../games/game.js").ServerHandler}}*/
         const {ServerAPI, LobbyAPI, ServerHandler, receiverKey} = gameAPIs.get(game.NAME); 
         const API = {ServerAPI, LobbyAPI, ServerHandler, receiverKey, target: game};
         const lobbyProxy = this.createProxy({API});
@@ -122,8 +122,8 @@ export class MainLobby extends ServerLobby{
 }
 class LobbyHandler extends ServerHandler{
     /**@type {MainLobby} */ get lobby(){return super.target;}
-    /**@type {import("./public/shared/LobbyAPI.js").ServerAPI} */ get api(){return super.api;}
-    /**@type {import("./public/shared/user.js").User} */ get user(){return super.user;}
+    /**@type {import("../public/shared/LobbyAPI.js").ServerAPI} */ get api(){return super.api;}
+    /**@type {import("../public/shared/user.js").User} */ get user(){return super.user;}
 
     leave_lobby(){
         this.lobby.api.broadcast.user_left();

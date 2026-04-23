@@ -17,7 +17,7 @@ export class Game extends BaseGame{
     game_init(){
         super.game_init();
     }
-}
+} 
 
 //const {ServerHandler: Handler} = await import(`../public/games/${gameName}/gameAPI.js`);
 export class ServerHandler extends AbstractHandler(BaseHandler){

@@ -1,9 +1,9 @@
 import {randomUUID} from "crypto";
 
-import { User as BaseUser} from "./public/shared/user.js";
-import { ServerAPI as API , ServerHandler} from "./public/shared/userAPI.js";
+import { User as BaseUser} from "../public/shared/user.js";
+import { ServerAPI as API , ServerHandler} from "../public/shared/userAPI.js";
 import { Lobbies} from "./lobby.js";
-import { default as config} from "./devconfig.js"
+import { default as config} from "../devconfig.js"
 
 const isDev = process.env.NODE_ENV !== 'production';
 
