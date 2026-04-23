@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { User } from "../../../../user.js";
+import { User } from "../../../../public/shared/user.js";
 
 describe("User creation", () => {
     let user;
