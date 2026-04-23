@@ -120,7 +120,7 @@ export class MainLobby extends ServerLobby{
         }
     }
 }
-class LobbyHandler extends ServerHandler{
+export class _LobbyHandler extends ServerHandler{
     /**@type {MainLobby} */ get lobby(){return super.target;}
     /**@type {import("../public/shared/LobbyAPI.js").ServerAPI} */ get api(){return super.api;}
     /**@type {import("../public/shared/user.js").User} */ get user(){return super.user;}
@@ -171,7 +171,7 @@ export const Lobbies = (() => {
         return id;
     };
     const LobbyClass = MainLobby;
-    const API = {ServerAPI, receiverKey, ServerHandler: LobbyHandler, LobbyAPI};
+    const API = {ServerAPI, receiverKey, ServerHandler: _LobbyHandler, LobbyAPI};
     lobbies.create = () => {
         const id = generateId();
         const lobby = MainLobby.prototype._generateLobbyCopy.call(null, {API, LobbyClass, id});
